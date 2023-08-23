@@ -1,0 +1,32 @@
+msh.h(100): Warning! W138: No newline at end of file
+msh.h(100): Warning! W129: #endif matches #if in different source file 'msh.h'
+test.c(61): Error! E1011: Symbol 'countryinfo' has not been declared
+test.c(70): Warning! W131: No prototype found for function 'prgheading'
+test.c(71): Warning! W131: No prototype found for function 'helpshort'
+test.c(82): Error! E1011: Symbol 'optind' has not been declared
+test.c(86): Error! E1063: Missing operand
+test.c(86): Warning! W111: Meaningless use of an expression
+test.c(86): Error! E1009: Expecting ';' but found 'int'
+test.c(86): Error! E1063: Missing operand
+test.c(86): Error! E1009: Expecting ';' but found 'int'
+test.c(86): Error! E1063: Missing operand
+test.c(86): Warning! W111: Meaningless use of an expression
+test.c(86): Error! E1009: Expecting ')' but found 'int'
+test.c(86): Error! E1011: Symbol 'i' has not been declared
+test.c(86): Error! E1009: Expecting ';' but found ')'
+test.c(86): Error! E1063: Missing operand
+test.c(86): Warning! W111: Meaningless use of an expression
+test.c(86): Error! E1009: Expecting ';' but found ')'
+test.c(86): Error! E1063: Missing operand
+test.c(86): Warning! W111: Meaningless use of an expression
+test.c(86): Error! E1009: Expecting ';' but found ')'
+test.c(86): Error! E1063: Missing operand
+test.c(86): Warning! W111: Meaningless use of an expression
+test.c(86): Error! E1009: Expecting ';' but found ')'
+test.c(86): Error! E1063: Missing operand
+test.c(86): Warning! W111: Meaningless use of an expression
+test.c(86): Error! E1009: Expecting ';' but found ')'
+test.c(86): Error! E1063: Missing operand
+test.c(86): Warning! W111: Meaningless use of an expression
+test.c(86): Error! E1009: Expecting ';' but found ')'
+test.c(86): Error! E1147: Too many errors: compilation aborted
