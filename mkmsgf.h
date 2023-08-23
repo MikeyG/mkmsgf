@@ -33,7 +33,6 @@
  *
  ***************************************************************************/
 
-
 #ifndef MKMSGF_H
 #define MKMSGF_H
 
@@ -52,43 +51,57 @@
   --> start file
  */
 
-#pragma pack ( push, 1)
+#pragma pack(push, 1)
 
 // Header of message file
-typedef struct _MSGHEADER {
-    uint8_t   magic[8];           // Magic word
-    uint8_t   identifier[3];      // Identifier (SYS, DOS, NET, etc.)
-    uint16_t  msgnumber;          // Number of messages
-    uint16_t  firstmsgnumber;     // Number of the first message
-    int8_t    offset16bit;        // Index table is 16-bit offsets for small file (<64k)
-    uint16_t  version;            // File version 2 - New Version 0 - Old Version
-    uint16_t  indextaboffset;     // pointer - Offset of index table
-    int8_t    countryinfo;        // pointer - Offset of country info block
-    int16_t   nextcoutryinfo;
-    uint8_t   reserved[8];        // Must be 0 (zero)
+typedef struct _MSGHEADER
+{
+    uint8_t magic[8];        // Magic word signature
+    uint8_t identifier[3];   // Identifier (SYS, DOS, NET, etc.)
+    uint16_t msgnumber;      // Number of messages
+    uint16_t firstmsgnumber; // Number of the first message
+    int8_t offset16bit;      // Index table is 16-bit offsets 0 dword 1 word
+    uint16_t version;        // File version 2 - New Version 0 - Old Version
+    uint16_t indextaboffset; // pointer - Offset of index table - size of _MSGHEADER
+    int8_t countryinfo;      // pointer - Offset of country info block
+    int16_t nextcoutryinfo;
+    uint8_t reserved[8]; // Must be 0 (zero)
 } MSGHEADER, *PMSGHEADER;
 
+// Header of message file
+typedef struct _MSGHEADER1
+{
+    uint8_t magic[8];        // Magic word signature
+    uint8_t identifier[3];   // Identifier (SYS, DOS, NET, etc.)
+    uint16_t msgnumber;      // Number of messages
+    uint16_t firstmsgnumber; // Number of the first message
+    int8_t offset16bit;      // Index table is 16-bit offsets 0 dword 1 word
+    uint16_t version;        // File version 2 - New Version 0 - Old Version
+    uint16_t indextaboffset; // pointer - Offset of index table - size of _MSGHEADER
+    int8_t countryinfo;      // pointer - Offset of country info block
+    int16_t nextcoutryinfo;
+    uint8_t reserved[8]; // Must be 0 (zero)
+} MSGHEADER1, *PMSGHEADER1;
 
 // Country Info block of message file
-typedef struct _FILECOUNTRYINFO {
-    uint8_t   bytesperchar;       // Bytes per char (1 - SBCS, 2 - DBCS)
-    uint16_t  reserved;           // Not known
-    uint16_t  langfamilyID;       // Language family ID (As in CPI Reference)
-    uint16_t  langversionID;      // Language version ID (As in CPI Reference)
-    uint16_t  codepagesnumber;    // Number of codepages
-    uint16_t  codepages[16];      // Codepages list (Max 16)
-    uint8_t   filename[260];      // Name of file
-    uint8_t   filler;             // filler byte - not used
+typedef struct _FILECOUNTRYINFO
+{
+    uint8_t bytesperchar;     // Bytes per char (1 - SBCS, 2 - DBCS)
+    uint16_t reserved;        // Not known
+    uint16_t langfamilyID;    // Language family ID (As in CPI Reference)
+    uint16_t langversionID;   // Language version ID (As in CPI Reference)
+    uint16_t codepagesnumber; // Number of codepages
+    uint16_t codepages[16];   // Codepages list (Max 16)
+    uint8_t filename[260];    // Name of file
+    uint8_t filler;           // filler byte - not used
 } FILECOUNTRYINFO, *PFILECOUNTRYINFO;
 
-
-typedef struct _MSGINFO {
-    uint16_t  msgnum;             // message number
-    uint16_t  msgindex;           // offset from begin of file
+typedef struct _MSGINFO
+{
+    uint16_t msgnum;   // message number
+    uint16_t msgindex; // offset from begin of file
 } MSGINFO, *PMSGINFO;
 
-#pragma pack ( pop )
+#pragma pack(pop)
 
 #endif
-
-
