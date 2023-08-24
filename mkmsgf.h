@@ -68,6 +68,21 @@ typedef struct _MSGHEADER
     uint8_t reserved[8]; // Must be 0 (zero)
 } MSGHEADER, *PMSGHEADER;
 
+// Header of message file
+typedef struct _MSGHEADER1
+{
+    uint8_t magic_sign[8]; // Magic word signature
+    uint8_t identifier[3]; // Identifier (SYS, DOS, NET, etc.)
+    uint16_t numbermsg;    // Number of messages
+    uint16_t firstmsg;     // Number of the first message
+    int8_t offset16bit;    // Index table is 16-bit offsets 0 dword 1 word
+    uint16_t version;      // File version 2 - New Version 0 - Old Version
+    uint16_t hdroffset;    // pointer - Offset of index table - size of _MSGHEADER
+    uint16_t countryinfo;  // pointer - Offset of country info block (cp)
+    uint32_t extenblock;   // better desc?
+    uint8_t reserved[5];   // Must be 0 (zero)
+} MSGHEADER1, *PMSGHEADER1;
+
 // Country Info block of message file
 typedef struct _FILECOUNTRYINFO
 {
