@@ -218,12 +218,15 @@ int main(int argc, char *argv[ ])
         exit(0);
     }
 
-    /*
+    /* *********************************************************************
      * The following is to just keep the input options getopt and IBM mkmsgf
-     * compatable
+     * compatable : MKMSGF infile[.ext] outfile[.ext] [/V]
+     * why? Because using getopt so it does not have to match old format
      */
 
     // is the input file first? yes, make compatable with IBM program
+    // so if the first option does not start with / or - then assume it
+    // is a filename
     if((*argv[1] != '-')&&(*argv[1] != '/')) {                  // first arg prefix - or / ?
         char *ptmp = argv[optind];                              // scratch pointer
         ++procinfile;                                           // no - set process infile true
