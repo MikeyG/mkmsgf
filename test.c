@@ -35,33 +35,32 @@ int readheader(char *filename)
 {
     FILE *fp;
 
+    uint8_t identifier[3];
+    uint16_t numbermsg;
+    uint16_t firstmsg;
+
+
+    MSGHEADER1 *newheader;
+
     // check the input msg file exists
     if (access(filename, F_OK) != 0)
         return (100);
 
-    MSGHEADER1 *newheader = (MSGHEADER1 *)calloc(sizeof(MSGHEADER1), sizeof(uint8_t));
+    newheader = (MSGHEADER1 *)calloc(sizeof(MSGHEADER1), sizeof(uint8_t));
 
     fp = fopen(filename, "r");
 
     fread(newheader, 1, sizeof(*newheader), fp);
 
-    printf("File: %s\n", filename);
-    printf("magic_sign   %d %c%c%c%c%c%c %d\n", newheader->magic_sign[0],
-           newheader->magic_sign[1],
-           newheader->magic_sign[2],
-           newheader->magic_sign[3],
-           newheader->magic_sign[4],
-           newheader->magic_sign[5],
-           newheader->magic_sign[6],
-           newheader->magic_sign[7]);
-    printf("identifier    %c%c%c\n", newheader->identifier[0], newheader->identifier[1], newheader->identifier[2]);
-    printf("numbermsg     %d\n", newheader->numbermsg);
-    printf("firstmsg      %d\n", newheader->firstmsg);
-    printf("offset16bit   %d\n", newheader->offset16bit);
-    printf("version       %d\n", newheader->version);
-    printf("hdroffset     %d\n", newheader->hdroffset);
-    printf("countryinfo   %d\n", newheader->countryinfo);
-    printf("extenblock    %d\n", newheader->extenblock);
+    strncpy(identifier, newheader->identifier, 3);
+    numbermsg = newheader->numbermsg;
+    firstmsg = newheader->firstmsg;
+
+    printf("File:       %s\n", filename);
+    printf("Identifier: %s\n\n", identifier);
+    printf("Number of messages:   %d\n", numbermsg);
+    printf("Message start number: %d\n", firstmsg);
+
 
 
     fclose(fp);

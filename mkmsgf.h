@@ -51,7 +51,7 @@
   --> start file
  */
 
-#pragma pack(push, 1)
+// #pragma pack(push, 1)
 
 // Header of message file
 typedef struct _MSGHEADER
@@ -102,6 +102,6 @@ typedef struct _MSGINFO
     uint16_t msgindex; // offset from begin of file
 } MSGINFO, *PMSGINFO;
 
-#pragma pack(pop)
+// #pragma pack(pop)
 
 #endif
