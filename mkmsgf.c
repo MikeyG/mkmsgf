@@ -205,9 +205,9 @@ int main(int argc, char *argv[ ])
 
     MSGHEADER1 *newheader = (MSGHEADER1 *)calloc(sizeof(MSGHEADER1), sizeof(uint8_t));
 
-    newheader->magic_sign[0] = {0xFF, 0x4D, 0x4B, 0x4D, 0x53, 0x47, 0x46, 0x00};
+    //newheader->magic_sign = {0xFF, 0x4D, 0x4B, 0x4D, 0x53, 0x47, 0x46, 0x00};
 
-    free(newheader):
+    free(newheader);
 
     // clear countryifo structures
     memset(&countryinfo, 0, sizeof(FILECOUNTRYINFO));

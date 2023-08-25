@@ -1,1 +1,1 @@
-test.c(97): Error! E1011: Symbol 'procinfile' has not been declared
+test.c(92): Warning! W138: No newline at end of file
