@@ -9,12 +9,14 @@
 #include <io.h>
 #include <sys\stat.h>
 #include <unistd.h>
+#include <malloc.h>
 #include "mkmsgf.h"
+#include "mkmsgerr.h"
 #include "version.h"
 
 #include <io.h>
 
-int readheader(char *filename);
+int readheader(char *filename, MESSAGEINFO *messageinfo);
 
 /* main( )
  *
@@ -23,7 +25,9 @@ int readheader(char *filename);
 int main(int argc, char *argv[])
 {
 
-    // DECOMPINFO *headerinfo;
+    int rc;
+
+    MESSAGEINFO messageinfo;
 
     if (argc < 2 || argc > 2)
     {
@@ -31,91 +35,127 @@ int main(int argc, char *argv[])
         return 1;
     }
 
-    return (readheader(argv[1]));
+    rc = readheader(argv[1], &messageinfo);
+
+    if (rc != 0)
+    {
+        printf("RC: %d\n\n", rc);
+        exit(rc);
+    }
+
+    printf("*********** Header Info ***********\n\n");
+
+    printf("Input filename         %s\n", messageinfo.infile);
+    printf("Component Identifier:  %s\n", messageinfo.identifier);
+    printf("Number of messages:    %d\n", messageinfo.numbermsg);
+    printf("First message number:  %d\n", messageinfo.firstmsg);
+    printf("OffsetID:              %d\n", messageinfo.offsetid);
+    printf("MSG File Version:      %d\n\n", messageinfo.version);
+    printf("Header offset:     0x%02X (%d)\n\n",
+           messageinfo.hdroffset, messageinfo.hdroffset);
+    printf("Country Info Offset:     0x%02X (%d)\n",
+           messageinfo.countryinfo, messageinfo.countryinfo);
+    printf("Ext Block Offset:        0x%02X (%lu)\n\n",
+           messageinfo.extenblock, messageinfo.extenblock);
+    printf("Reserved area:\n");
+    for (int x = 0; x < 5; x++)
+        printf("%02X ", messageinfo.reserved[x]);
+    printf("\n");
+    printf("\n*********** Country Info  ***********\n\n");
+    printf("Bytes per character:       %d\n", messageinfo.bytesperchar);
+    printf("Country Code:              %d\n", messageinfo.country);
+    printf("Language family ID:        %d\n", messageinfo.langfamilyID);
+    printf("Language version ID:       %d\n", messageinfo.langversionID);
+    printf("Number of codepages:       %d\n", messageinfo.codepagesnumber);
+    for (int x = 0; x < messageinfo.codepagesnumber; x++)
+        printf("%02X (%d)  ", messageinfo.codepages[x], messageinfo.codepages[x]);
+    printf("\n");
+    printf("File name:                 %s\n", messageinfo.filename);
+    printf("\nEnd Decompile (%d)\n", rc);
+    return (rc);
 }
 
 /*
- * 1. Prints filename if input file exists.
- * 2.
  */
 
-int readheader(char *filename)
+int readheader(char *filename, MESSAGEINFO *messageinfo)
 {
-    FILE *fp;
-    int read;
-
-    uint8_t identifier[4] = {0};
-    uint16_t numbermsg;
-    uint16_t firstmsg;
-    uint8_t offsetid;
-    uint16_t version;
-    uint16_t hdroffset;
-    uint16_t countryinfo;
-    uint32_t extenblock;
-
-    MSGHEADER1 *newheader;
+    MSGHEADER1 *msgheader = NULL;
+    FILECOUNTRYINFO1 *cpheader = NULL;
 
     // check the input msg file exists
     if (access(filename, F_OK) != 0)
-        return (100);
-    else
-        printf("\nInput Filename:   %s\n\n", filename);
+        return (MKMSG_INPUT_ERROR);
+
+    strcpy(messageinfo->infile, filename);
 
     // open input file
-    fp = fopen(filename, "rb");
+    FILE *fp = fopen(filename, "rb");
     if (fp == NULL)
-        return (101);
+        return (MKMSG_OPEN_ERROR);
 
     // buffer to read in header
-    uint8_t *header = (uint8_t *)calloc(sizeof(MSGHEADER1), sizeof(uint8_t));
+    char *header = (char *)calloc(sizeof(MSGHEADER1), sizeof(char));
     if (header == NULL)
-        return 102;
+        return (MKMSG_MEM_ERROR);
 
     // read header
-    read = fread(header, sizeof(MSGHEADER1), sizeof(MSGHEADER1), fp);
+    int read = fread(header, sizeof(char), sizeof(MSGHEADER1), fp);
+    if (ferror(fp))
+        return (MKMSG_READ_ERROR);
 
-    newheader = (MSGHEADER1 *)header;
+    // MSGHEADER1 point to header buffer
+    msgheader = (MSGHEADER1 *)header;
 
-    // check header signature
+    // check header signature, return error no match
     for (int x = 0; x < sizeof(signature); x++)
-        if (signature[x] != newheader->magic_sig[x])
-            return 103;
+        if (signature[x] != msgheader->magic_sig[x])
+            return (MKMSG_HEADER_ERROR);
 
-    // made it to here because signature was good
-    printf("Header signature was good.\n\n");
-
-    // get component ID
+    // Pulls all header information into MESSAGEINFO
     for (int x = 0; x < 3; x++)
-        identifier[x] = newheader->identifier[x];
-    identifier[3] = 0x00;
+        messageinfo->identifier[x] = msgheader->identifier[x];
+    messageinfo->identifier[3] = 0x00;
 
-    numbermsg = newheader->numbermsg;
-    firstmsg = newheader->firstmsg;
-    offsetid = newheader->offset16bit;
-    version = newheader->version;
-    countryinfo = newheader->countryinfo;
-    extenblock = newheader->extenblock;
-
-    printf("Component Identifier:  %s\n", identifier);
-    printf("Number of messages:    %d\n", numbermsg);
-    printf("First message number:  %d\n", firstmsg);
-    printf("OffsetID:              %d\n", offsetid);
-    printf("MSG File Version:      %d\n\n", version);
-    printf("Header offset:     0x%02X (%d)\n\n",
-           newheader->hdroffset,
-           newheader->hdroffset);
-    printf("Country Info Offset:   %d\n", countryinfo);
-    printf("Ext Block Offset:     %lu\n\n", extenblock);
-
-    // display reseved area for fun
-    printf("Reserved area:\n");
+    messageinfo->numbermsg = msgheader->numbermsg;
+    messageinfo->firstmsg = msgheader->firstmsg;
+    messageinfo->offsetid = msgheader->offset16bit;
+    messageinfo->version = msgheader->version;
+    messageinfo->countryinfo = msgheader->countryinfo;
+    messageinfo->extenblock = msgheader->extenblock;
+    messageinfo->hdroffset = msgheader->hdroffset;
     for (int x = 0; x < 5; x++)
-        printf("%02X ", newheader->reserved[x]);
-    printf("\n");
+        messageinfo->reserved[x] = msgheader->reserved[x];
+
+    // *** Get country info
+    // re-allocate buffer to size of FILECOUNTRYINFO1
+    header = (char *)realloc(header, sizeof(FILECOUNTRYINFO1));
+    if (header == NULL)
+        return (MKMSG_MEM_ERROR);
+
+    // seek to the block for read
+    fseek(fp, messageinfo->countryinfo, SEEK_SET);
+
+    // read header
+    read = fread(header, sizeof(char), sizeof(FILECOUNTRYINFO1), fp);
+    if (ferror(fp))
+        return (MKMSG_READ_ERROR);
+
+    // FILECOUNTRYINFO1 point to header buffer
+    cpheader = (FILECOUNTRYINFO1 *)header;
+
+    // Pulls all country information into MESSAGEINFO
+    messageinfo->bytesperchar = cpheader->bytesperchar;
+    messageinfo->country = cpheader->country;
+    messageinfo->langfamilyID = cpheader->langfamilyID;
+    messageinfo->langversionID = cpheader->langversionID;
+    messageinfo->codepagesnumber = cpheader->codepagesnumber;
+    strcpy(messageinfo->filename, cpheader->filename);
 
     fclose(fp);
-    free(newheader);
+    free(header);
 
     printf("End run\n");
-    return 0;
+
+    return (0);
 }
