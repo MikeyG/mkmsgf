@@ -22,6 +22,9 @@ int readheader(char *filename);
  */
 int main(int argc, char *argv[])
 {
+
+    // DECOMPINFO *headerinfo;
+
     if (argc < 2 || argc > 2)
     {
         printf("no args\n");
@@ -31,37 +34,84 @@ int main(int argc, char *argv[])
     return (readheader(argv[1]));
 }
 
+/*
+ * 1. Prints filename if input file exists.
+ * 2.
+ */
+
 int readheader(char *filename)
 {
     FILE *fp;
+    int read;
 
-    uint8_t identifier[3];
+    uint8_t identifier[4] = {0};
     uint16_t numbermsg;
     uint16_t firstmsg;
-
+    uint8_t offsetid;
+    uint16_t version;
+    uint16_t hdroffset;
+    uint16_t countryinfo;
+    uint32_t extenblock;
 
     MSGHEADER1 *newheader;
 
     // check the input msg file exists
     if (access(filename, F_OK) != 0)
         return (100);
+    else
+        printf("\nInput Filename:   %s\n\n", filename);
 
-    newheader = (MSGHEADER1 *)calloc(sizeof(MSGHEADER1), sizeof(uint8_t));
+    // open input file
+    fp = fopen(filename, "rb");
+    if (fp == NULL)
+        return (101);
 
-    fp = fopen(filename, "r");
+    // buffer to read in header
+    uint8_t *header = (uint8_t *)calloc(sizeof(MSGHEADER1), sizeof(uint8_t));
+    if (header == NULL)
+        return 102;
 
-    fread(newheader, 1, sizeof(*newheader), fp);
+    // read header
+    read = fread(header, sizeof(MSGHEADER1), sizeof(MSGHEADER1), fp);
 
-    strncpy(identifier, newheader->identifier, 3);
+    newheader = (MSGHEADER1 *)header;
+
+    // check header signature
+    for (int x = 0; x < sizeof(signature); x++)
+        if (signature[x] != newheader->magic_sig[x])
+            return 103;
+
+    // made it to here because signature was good
+    printf("Header signature was good.\n\n");
+
+    // get component ID
+    for (int x = 0; x < 3; x++)
+        identifier[x] = newheader->identifier[x];
+    identifier[3] = 0x00;
+
     numbermsg = newheader->numbermsg;
     firstmsg = newheader->firstmsg;
+    offsetid = newheader->offset16bit;
+    version = newheader->version;
+    countryinfo = newheader->countryinfo;
+    extenblock = newheader->extenblock;
 
-    printf("File:       %s\n", filename);
-    printf("Identifier: %s\n\n", identifier);
-    printf("Number of messages:   %d\n", numbermsg);
-    printf("Message start number: %d\n", firstmsg);
+    printf("Component Identifier:  %s\n", identifier);
+    printf("Number of messages:    %d\n", numbermsg);
+    printf("First message number:  %d\n", firstmsg);
+    printf("OffsetID:              %d\n", offsetid);
+    printf("MSG File Version:      %d\n\n", version);
+    printf("Header offset:     0x%02X (%d)\n\n",
+           newheader->hdroffset,
+           newheader->hdroffset);
+    printf("Country Info Offset:   %d\n", countryinfo);
+    printf("Ext Block Offset:     %lu\n\n", extenblock);
 
-
+    // display reseved area for fun
+    printf("Reserved area:\n");
+    for (int x = 0; x < 5; x++)
+        printf("%02X ", newheader->reserved[x]);
+    printf("\n");
 
     fclose(fp);
     free(newheader);
@@ -69,23 +119,3 @@ int readheader(char *filename)
     printf("End run\n");
     return 0;
 }
-
-/*
-magic_sign   255 MKMSGF 0
-identifier    SYS
-numbermsg     179
-firstmsg      0
-offset16bit   2
-version       7936
-
-    uint8_t magic_sign[8]; // Magic word signature
-    uint8_t identifier[3]; // Identifier (SYS, DOS, NET, etc.)
-    uint16_t numbermsg;    // Number of messages
-    uint16_t firstmsg;     // Number of the first message
-    int8_t offset16bit;    // Index table is 16-bit offsets 0 dword 1 word
-uint16_t version;      // File version 2 - New Version 0 - Old Version
-uint16_t hdroffset;    // pointer - Offset of index table - size of _MSGHEADER
-uint16_t countryinfo;  // pointer - Offset of country info block (cp)
-uint32_t extenblock;   // better desc?
-uint8_t reserved[5];   // Must be 0 (zero)
-*/

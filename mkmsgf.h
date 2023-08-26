@@ -51,7 +51,7 @@
   --> start file
  */
 
-// #pragma pack(push, 1)
+#pragma pack(push, 1)
 
 // Header of message file
 typedef struct _MSGHEADER
@@ -71,7 +71,7 @@ typedef struct _MSGHEADER
 // Header of message file
 typedef struct _MSGHEADER1
 {
-    uint8_t magic_sign[8]; // Magic word signature
+    uint8_t magic_sig[8]; // Magic word signature
     uint8_t identifier[3]; // Identifier (SYS, DOS, NET, etc.)
     uint16_t numbermsg;    // Number of messages
     uint16_t firstmsg;     // Number of the first message
@@ -102,6 +102,23 @@ typedef struct _MSGINFO
     uint16_t msgindex; // offset from begin of file
 } MSGINFO, *PMSGINFO;
 
-// #pragma pack(pop)
+#pragma pack(pop)
+
+// Header of message file
+typedef struct _DECOMPINFO
+{
+    uint8_t *identifier[3]; // Identifier (SYS, DOS, NET, etc.)
+    uint16_t numbermsg;    // Number of messages
+    uint16_t firstmsg;     // Number of the first message
+    int8_t offset16bit;    // Index table is 16-bit offsets 0 dword 1 word
+    uint16_t version;      // File version 2 - New Version 0 - Old Version
+    uint16_t hdroffset;    // pointer - Offset of index table - size of _MSGHEADER
+    uint16_t countryinfo;  // pointer - Offset of country info block (cp)
+    uint32_t extenblock;   // better desc?
+} DECOMPINFO, *DECOMPINFO;
+
+// mkmsgf header signature - a valid MSG file alway starts with
+// these 8 bytes 0xFF MKMSGF 0x00
+char signature[] = {0xFF, 0x4D, 0x4B, 0x4D, 0x53, 0x47, 0x46, 0x00};
 
 #endif
