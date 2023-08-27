@@ -17,6 +17,9 @@
 #include <io.h>
 
 int readheader(char *filename, MESSAGEINFO *messageinfo);
+int setup_options(MESSAGEINFO *messageinfo);
+int readmessages(MESSAGEINFO *messageinfo);
+
 
 /* main( )
  *
@@ -49,15 +52,16 @@ int main(int argc, char *argv[])
     printf("Component Identifier:  %s\n", messageinfo.identifier);
     printf("Number of messages:    %d\n", messageinfo.numbermsg);
     printf("First message number:  %d\n", messageinfo.firstmsg);
-    printf("OffsetID:              %d\n", messageinfo.offsetid);
-    printf("MSG File Version:      %d\n\n", messageinfo.version);
-    printf("Header offset:     0x%02X (%d)\n\n",
+    printf("OffsetID:              %d  (Offset %s)\n", messageinfo.offsetid,
+           (messageinfo.offsetid ? "uint16_t" : "uint32_t"));
+    printf("MSG File Version:      %d\n", messageinfo.version);
+    printf("Header offset:         0x%02X (%d)\n",
            messageinfo.hdroffset, messageinfo.hdroffset);
-    printf("Country Info Offset:     0x%02X (%d)\n",
+    printf("Country Info:          0x%02X (%d)\n",
            messageinfo.countryinfo, messageinfo.countryinfo);
-    printf("Ext Block Offset:        0x%02X (%lu)\n\n",
+    printf("Extended Header:       0x%02X (%lu)\n",
            messageinfo.extenblock, messageinfo.extenblock);
-    printf("Reserved area:\n");
+    printf("Reserved area:         ");
     for (int x = 0; x < 5; x++)
         printf("%02X ", messageinfo.reserved[x]);
     printf("\n");
@@ -70,18 +74,32 @@ int main(int argc, char *argv[])
     for (int x = 0; x < messageinfo.codepagesnumber; x++)
         printf("%02X (%d)  ", messageinfo.codepages[x], messageinfo.codepages[x]);
     printf("\n");
-    printf("File name:                 %s\n", messageinfo.filename);
+    printf("File name:                 %s\n\n", messageinfo.filename);
+    if (messageinfo.extenblock)
+    {
+        printf("** Has an extended header **\n");
+        printf("Ext header length:        %d\n", messageinfo.extlength);
+        printf("Number ext blocks:        %d\n", messageinfo.extnumblocks);
+    }
+    else
+        printf("** No an extended header **\n");
+
+
+
+    
     printf("\nEnd Decompile (%d)\n", rc);
     return (rc);
 }
 
 /*
+ *
  */
 
 int readheader(char *filename, MESSAGEINFO *messageinfo)
 {
     MSGHEADER1 *msgheader = NULL;
     FILECOUNTRYINFO1 *cpheader = NULL;
+    EXTHDR *extheader = NULL;
 
     // check the input msg file exists
     if (access(filename, F_OK) != 0)
@@ -121,9 +139,9 @@ int readheader(char *filename, MESSAGEINFO *messageinfo)
     messageinfo->firstmsg = msgheader->firstmsg;
     messageinfo->offsetid = msgheader->offset16bit;
     messageinfo->version = msgheader->version;
+    messageinfo->hdroffset = msgheader->hdroffset;
     messageinfo->countryinfo = msgheader->countryinfo;
     messageinfo->extenblock = msgheader->extenblock;
-    messageinfo->hdroffset = msgheader->hdroffset;
     for (int x = 0; x < 5; x++)
         messageinfo->reserved[x] = msgheader->reserved[x];
 
@@ -151,11 +169,61 @@ int readheader(char *filename, MESSAGEINFO *messageinfo)
     messageinfo->langversionID = cpheader->langversionID;
     messageinfo->codepagesnumber = cpheader->codepagesnumber;
     strcpy(messageinfo->filename, cpheader->filename);
+    for (int x = 0; x < messageinfo->codepagesnumber; x++)
+        messageinfo->codepages[x] = cpheader->codepages[x];
 
+    // quick check of extended header
+    // it's a small block but be consistent
+    if (messageinfo->extenblock == 0)
+    {
+        // No ext header so set to 0
+        messageinfo->extlength = 0;
+        messageinfo->extnumblocks = 0;
+    }
+    else
+    {
+        // re-allocate buffer to size of EXTHDR
+        header = (char *)realloc(header, sizeof(EXTHDR));
+        if (header == NULL)
+            return (MKMSG_MEM_ERROR);
+
+        // seek to the block for read
+        fseek(fp, messageinfo->extenblock, SEEK_SET);
+
+        // read header
+        read = fread(header, sizeof(char), sizeof(EXTHDR), fp);
+        if (ferror(fp))
+            return (MKMSG_READ_ERROR);
+
+        // FILECOUNTRYINFO1 point to header buffer
+        extheader = (EXTHDR *)header;
+
+        messageinfo->extlength = extheader->hdrlen;
+        messageinfo->extnumblocks = extheader->numblocks;
+    }
+
+    // close up and get out
     fclose(fp);
     free(header);
 
-    printf("End run\n");
-
     return (0);
 }
+
+/*
+ *
+ * Readable way to setup a couple items 
+ */
+int setup_options(MESSAGEINFO *messageinfo)
+{
+    // index starts after 
+
+    return 0;
+
+}
+
+int readmessages(MESSAGEINFO *messageinfo)
+{
+    return 0;
+}
+
+

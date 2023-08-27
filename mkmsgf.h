@@ -109,11 +109,24 @@ typedef struct _FILECOUNTRYINFO1
     uint8_t filler;               // filler byte - not used
 } FILECOUNTRYINFO1, *PFILECOUNTRYINFO1;
 
+// extended header block
+typedef struct _EXTHDR
+{
+    uint16_t hdrlen;    // length of ???
+    uint16_t numblocks; // number of additional FILECOUNTRYINFO blocks
+} EXTHDR, *PEXTHDR;
+
 typedef struct _MSGINFO
 {
     uint16_t msgnum;   // message number
     uint16_t msgindex; // offset from begin of file
 } MSGINFO, *PMSGINFO;
+
+typedef struct _MSGINFOL
+{
+    uint16_t msgnum;   // message number
+    uint32_t msgindex; // offset from begin of file
+} MSGINFOL, *PMSGINFOL;
 
 #pragma pack(pop)
 
@@ -137,6 +150,8 @@ typedef struct _MESSAGEINFO
     uint16_t codepagesnumber;     // Number of codepages
     uint16_t codepages[16];       // Codepages list (Max 16)
     uint8_t filename[CCHMAXPATH]; // Name of file
+    uint16_t extlength;           // length of ???
+    uint16_t extnumblocks;        // number of additional sub FILECOUNTRYINFO blocks
 } MESSAGEINFO;
 
 // mkmsgf header signature - a valid MSG file alway starts with
