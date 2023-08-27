@@ -1,0 +1,61 @@
+:p.MKMSGF - The data structure for the header of root/sub message file is,
+.fo off
+
+
+    SIGNATURE_H     DB	    8 DUP (?)	;signature mark
+    COMPONENT_ID    DB	    3 DUP (?)	;component id
+    MSG_COUNT	    DW	    ?		;number of messages
+    BASE_MID	    DW	    ?		;base message number
+    INDICATOR	    DB	    ?		;msg text offset
+					;type: 1=word offsets
+					;      0=dword offsets
+    VERSION	    DW	    ?		;version number
+    HEADER_LENGTH   DW	    ?		;length of header in bytes
+    CP_DATA	    DW	    ?		;ptr of code pages of root msg file
+    EXT_HEADER	    DD	    ?		;offset to ext.header if !=0
+					;if it's sub, this offset = 0
+    RESERVED	    DB	    5 DUP (?)	;reserved 0 HEADER ENDS
+
+
+.fo on
+.sp 2
+:p.The new code page data will be needed when the CP_DATA field is non zero.
+The data structure of the new code page data is,
+.fo off
+
+    ;  --------------------------------------------------------
+    ;  Message file definition records
+		    DB	 ?	    ; CP type 1=sbcs, 2=dbcs
+		    DW	 ?	    ; Country ID
+		    DW	 ?	    ; Language ID: language family
+		    DW	 ?	    ;		   language version
+		    DW	 ?	    ; CP count
+		    DW	 16 dup(0)  ; CP IDs  (maximum 16 code pages)
+		    DB	 MAXPATHLEN ; ASCII file name
+		    DB	 0	    ; ASCIIZ string zero byte
+    ;  --------------------------------------------------------
+
+.fo on
+:p.The new extended header will be needed when the EXT.HEADER field is not zero.
+The data structure of the new extended header is,
+.fo off
+
+    ;  --------------------------------------------------------
+    ; File header extension for multi_CP message files follows:
+		    DW	 ?	    ; Header length
+		    DW	 ?	    ; number of file definition records (>= 1)
+    ;  --------------------------------------------------------
+    ;  Message file definition records
+		    DB	 ?	    ; CP type 1=sbcs, 2=dbcs
+		    DW	 ?	    ; Country ID
+		    DW	 ?	    ; Language ID: language family
+		    DW	 ?	    ;		   language version
+		    DW	 ?	    ; CP count
+		    DW	 16 dup(0)  ; CP IDs  (maximum 16 code pages)
+		    DB	 MAXPATHLEN ; ASCII file name
+		    DB	 0	    ; ASCIIZ string zero byte
+    ;	Repeat definition for each additional message file entry
+    ;  --------------------------------------------------------
+
+.fo on
+

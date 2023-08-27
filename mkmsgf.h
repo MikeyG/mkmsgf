@@ -60,7 +60,7 @@ typedef struct _MSGHEADER
     uint8_t identifier[3];   // Identifier (SYS, DOS, NET, etc.)
     uint16_t msgnumber;      // Number of messages
     uint16_t firstmsgnumber; // Number of the first message
-    int8_t offset16bit;      // Index table is 16-bit offsets 0 dword 1 word
+    int8_t offset16bit;      // Index table is 16-bit offsets 0 uint32_t / 1 uint16_t
     uint16_t version;        // File version 2 - New Version 0 - Old Version
     uint16_t indextaboffset; // pointer - Offset of index table - size of _MSGHEADER
     int8_t countryinfo;      // pointer - Offset of country info block
@@ -79,7 +79,7 @@ typedef struct _MSGHEADER1
     uint16_t version;      // File version 2 - New Version 0 - Old Version
     uint16_t hdroffset;    // pointer - Offset of index table - size of _MSGHEADER
     uint16_t countryinfo;  // pointer - Offset of country info block (cp)
-    uint32_t extenblock;   // better desc?
+    uint32_t extenblock;   // pointer to ext block - 0 if none
     uint8_t reserved[5];   // Must be 0 (zero)
 } MSGHEADER1, *PMSGHEADER1;
 
@@ -152,6 +152,10 @@ typedef struct _MESSAGEINFO
     uint8_t filename[CCHMAXPATH]; // Name of file
     uint16_t extlength;           // length of ???
     uint16_t extnumblocks;        // number of additional sub FILECOUNTRYINFO blocks
+    uint16_t indexoffset;         // okay dup of hdroffset
+    uint16_t indexsize;           // size in bytes of index
+    uint32_t msgoffset;           // offset to start of messages
+    uint32_t msgendofblock;       // offset to end of messages
 } MESSAGEINFO;
 
 // mkmsgf header signature - a valid MSG file alway starts with
