@@ -17,7 +17,6 @@
 #include <io.h>
 
 int readheader(char *filename, MESSAGEINFO *messageinfo);
-int setup_options(MESSAGEINFO *messageinfo);
 int readmessages(MESSAGEINFO *messageinfo);
 int getmessages(FILE *fp, unsigned long msgcurrent,
                 unsigned long msg_next, unsigned long msgcount);
@@ -80,12 +79,10 @@ int main(int argc, char *argv[])
     {
         printf("** Has an extended header **\n");
         printf("Ext header length:        %d\n", messageinfo.extlength);
-        printf("Number ext blocks:        %d\n", messageinfo.extnumblocks);
+        printf("Number ext blocks:        %d\n\n", messageinfo.extnumblocks);
     }
     else
-        printf("** No an extended header **\n");
-
-    printf("\n - Messages start:   0x%02X\n\n", messageinfo.msgoffset);
+        printf("** No an extended header **\n\n");
 
     rc = readmessages(&messageinfo);
 
@@ -227,25 +224,6 @@ int readheader(char *filename, MESSAGEINFO *messageinfo)
     return (0);
 }
 
-/* setup_options(MESSAGEINFO *messageinfo)
-
-Index location/size
-
-1. messageinfo->hdroffset is the size of header and as an offset
-the start of index.
-
-2. messageinfo->countryinfo - 1 is the end of index.
-
-3. Each index record points to a message using either a "uint16_t"
-or "uint32_t" size. So the max uint16_t size is 65535 which would
-somewhat determine
-
-*/
-int setup_options(MESSAGEINFO *messageinfo)
-{
-
-    return 0;
-}
 
 int readmessages(MESSAGEINFO *messageinfo)
 {
@@ -260,6 +238,11 @@ int readmessages(MESSAGEINFO *messageinfo)
 
     // track size of message read buffer
     unsigned long msglenbuffer = 80;
+
+    // plan ahead Comp_ID (3) + Msg_Num (4) + Msg_Type (1) + ": " (2) = 10
+    char msginfo[10] = {0};
+
+    char *scratchptr = NULL;
 
     // open input file
     FILE *fp = fopen(messageinfo->filename, "rb");
@@ -333,7 +316,8 @@ int readmessages(MESSAGEINFO *messageinfo)
         // check read buffer size
         if ((msg_next - msgcurrent) > msglenbuffer)
         {
-            msglenbuffer = (msg_next - msgcurrent); // new buffer size
+            printf("********** Bump buffer\n");
+            msglenbuffer = msg_next - msgcurrent; // new buffer size
             msgbuffer = (char *)realloc(msgbuffer, msglenbuffer);
             if (msgbuffer == NULL)
             {
@@ -344,16 +328,22 @@ int readmessages(MESSAGEINFO *messageinfo)
             }
         }
 
-        // clear the msgbuffer
+        // clear the msgbuffer -- set all to 0x00
         memset(msgbuffer, 0x00, msglenbuffer);
 
         // read in the message
         fread(msgbuffer, sizeof(char), (msg_next - msgcurrent), fp);
 
-        
-        printf("%s%04d%c %s", messageinfo->identifier, msgcount, msgbuffer[0], msgbuffer);
+        scratchptr = msgbuffer;
+        *scratchptr++;
 
-        // getmessages(fp, msgcurrent, msg_next, msgcount);
+        // plan ahead Comp_ID (3) + Msg_Num (4) + Msg_Type (1) + ": " (2) = 10
+        sprintf(msginfo, "%s%04d%c: ", messageinfo->identifier, msgcount, msgbuffer[0]);
+
+        printf("%s%s", msginfo, scratchptr);
+
+        if(msgbuffer[0] == 'P') printf("\n");
+
     }
 
     printf("\n");
