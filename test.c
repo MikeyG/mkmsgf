@@ -224,7 +224,6 @@ int readheader(char *filename, MESSAGEINFO *messageinfo)
     return (0);
 }
 
-
 int readmessages(MESSAGEINFO *messageinfo)
 {
     // index pointers
@@ -313,12 +312,14 @@ int readmessages(MESSAGEINFO *messageinfo)
         // seek to the start of message to read
         fseek(fp, msgcurrent, SEEK_SET);
 
-        // check read buffer size
-        if ((msg_next - msgcurrent) > msglenbuffer)
+        // check read buffer size -- Do we need a bigger buffer?
+        // Note: the +5 size is to give me room for %0 or <CR>
+        if (((msg_next - msgcurrent) + 5) > msglenbuffer)
         {
             printf("********** Bump buffer\n");
-            msglenbuffer = msg_next - msgcurrent; // new buffer size
-            msgbuffer = (char *)realloc(msgbuffer, msglenbuffer);
+            printf("Old: %d   New: %d   Current: %d\n", msglenbuffer, (msg_next - msgcurrent), _msize(msgbuffer));
+            msglenbuffer = (msg_next - msgcurrent) + 5; // new buffer size
+            msgbuffer = (char *)realloc(msgbuffer, (msglenbuffer));
             if (msgbuffer == NULL)
             {
                 fclose(fp);
@@ -326,6 +327,7 @@ int readmessages(MESSAGEINFO *messageinfo)
                 free(buffer);
                 return (MKMSG_MEM_ERROR);
             }
+            printf("Buff actual:  %d\n", _msize(msgbuffer));
         }
 
         // clear the msgbuffer -- set all to 0x00
@@ -334,16 +336,20 @@ int readmessages(MESSAGEINFO *messageinfo)
         // read in the message
         fread(msgbuffer, sizeof(char), (msg_next - msgcurrent), fp);
 
+        // set up pointer to skip Msg_Type (1) and other
         scratchptr = msgbuffer;
         *scratchptr++;
+
+        if (msgbuffer[0] == 'P')
+            printf("****** Prompt Need special:  %d    %d\n", (msg_next - msgcurrent), strlen(scratchptr));
 
         // plan ahead Comp_ID (3) + Msg_Num (4) + Msg_Type (1) + ": " (2) = 10
         sprintf(msginfo, "%s%04d%c: ", messageinfo->identifier, msgcount, msgbuffer[0]);
 
         printf("%s%s", msginfo, scratchptr);
 
-        if(msgbuffer[0] == 'P') printf("\n");
-
+        if (msgbuffer[0] == 'P')
+            printf("\n");
     }
 
     printf("\n");

@@ -33,6 +33,9 @@ SYS0004E: The system cannot open the file.
 SYS0005E: Access is denied.
 SYS0006I: Incorrect internal file identifier.
 SYS0007I: The storage control blocks were destroyed.
+********** Bump buffer
+Old: 80   New: 97   Current: 84
+Buff actual:  108
 SYS0008E: There is not enough memory available to process this command.
 All available memory is in use.
 SYS0009I: The storage control block address is invalid.
@@ -65,6 +68,7 @@ SYS0032E: The process cannot access the file because it is being used
 by another process.
 SYS0033E: The process cannot access the file because another
 process has locked a portion of the file.
+****** Prompt Need special:  92    91
 SYS0034P: The wrong diskette is in the drive.  Insert %2
 (Volume Serial Number: %3) into drive %1.
 
@@ -114,6 +118,9 @@ SYS0071E: The network request was not accepted.
 SYS0072E: The specified printer or disk device has been paused.
 SYS0073E: The diskette is write protected.
 SYS0074E: A device attached to the system is not functioning.
+********** Bump buffer
+Old: 102   New: 388   Current: 108
+Buff actual:  396
 SYS0075E: There is not enough memory to run this XGA application.
 If you want the application to continue running, do the following:
 1. Select End program/command/operation.
@@ -122,7 +129,7 @@ If you want the application to continue running, do the following:
 3. Free memory by ending some running programs.
 4. Return the XGA application to the foreground by selecting it
    from the Window List.
-œ¥SYS0076?: 
+SYS0076?: 
 SYS0077?: 
 SYS0078?: 
 SYS0079?: 
@@ -152,8 +159,10 @@ SYS0102E: The semaphore is set and cannot be closed.
 SYS0103E: The semaphore cannot be set again.
 SYS0104E: Cannot request exclusive semaphores at interrupt time.
 SYS0105I: The previous ownership of this semaphore has ended.
+****** Prompt Need special:  35    34
 SYS0106P: Insert the diskette for drive %1
 
+****** Prompt Need special:  63    62
 SYS0107P: Program stopped because alternate diskette was not inserted.
 
 SYS0108E: The disk is in use or locked by another process.
@@ -687,7 +696,8 @@ SYS0535I:
 %1 kilobytes of total disk space.
 SYS0536I: %1 kilobytes are in bad blocks.
 SYS0537I: %1 kilobytes are available.
-SYS0538I: %1% of the disk has been formatted.SYS0539P: Type the current volume label for drive %1.
+SYS0538I: %1% of the disk has been formatted.****** Prompt Need special:  44    43
+SYS0539P: Type the current volume label for drive %1.
 SYS0540E: The disk did not format for HPFS.
 SYS0541I: The HPFS (High Performance File System) driver is loaded.
 SYS0542I: %1 cache buffers are specified by the DISKCACHE=
@@ -716,6 +726,7 @@ place on the disk.
 SYS0556I: CHKDSK removed a corrupted directory block.
 SYS0557I: CHKDSK removed the corrupted file %1.
 SYS0558I: CHKDSK corrected a disk space allocation error.
+****** Prompt Need special:  186    185
 SYS0559P: Warning!  The specified disk does not appear to be
 formatted for HPFS (High Performance File System).  Running
 CHKDSK on this disk might destroy data.  Do you want to
@@ -809,6 +820,9 @@ SYS0621I:
             MaxAge: %2 milliseconds
         BufferIdle: %3 milliseconds
         Cache size: %4 kbytes
+********** Bump buffer
+Old: 393   New: 435   Current: 396
+Buff actual:  444
 SYS0622I: Correct usage: %1 [OPTIONS]
 where OPTIONS is one or more of:
  -DISKIDLE:n         Sets disk-idle time before write to n milliseconds.
@@ -833,6 +847,7 @@ SYS0629E: %1 is not a valid parameter to use with the
 FORMAT command when formatting a hard disk.
 SYS0630E: The High Performance File System (HPFS) format could not
 modify the CONFIG.SYS file.
+****** Prompt Need special:  45    44
 SYS0631P: Press Enter to begin recovery of the file.
 
 SYS0632I: %1 kilobytes are reserved for system use.
@@ -863,6 +878,9 @@ SYS0646?:
 SYS0647?: 
 SYS0648?: 
 SYS0649I: Local %1: is mapped to OS/2 %2:
+********** Bump buffer
+Old: 440   New: 452   Current: 444
+Buff actual:  460
 SYS0650I: In a specific DOS session, access drives using the OS/2 file
 system.
 Syntax:
@@ -873,7 +891,7 @@ where:
   DOSletter-DOSletter   Indicates a sequence of drive letters.
   OS2drive              Indicates a drive letter mapped to an OS/2
                         drive letter.
-\¥SYS0651E: DOS support is not active because the DEVICE= statement
+SYS0651E: DOS support is not active because the DEVICE= statement
 for the virtual %1 device was not specified in the CONFIG.SYS file.
 SYS0652E: The specified drive letter is in use and cannot be remapped
 or deregistered.
@@ -885,6 +903,7 @@ SYS0655E: The syntax for deregistration is incorrect.  The
 deregistration symbol (!) must precede a drive letter.
 SYS0656E: The FSFILTER.SYS device is not installed.
 SYS0657E: The parameter specified is not a drive letter.
+****** Prompt Need special:  232    231
 SYS0658P: This DOS diskette may not start.  Before creating a diskette
 image, you may want to verify that this diskette can be started.  To
 verify that it will start, try starting it in a VM Boot session.
@@ -1120,6 +1139,9 @@ SYS0863I: Mode            Advanced
 SYS0864I: Mode            Normal
 SYS0865I: System %1       %2
 SYS0866I: System %1       None
+********** Bump buffer
+Old: 457   New: 876   Current: 460
+Buff actual:  884
 SYS0867I: SETBOOT enables Boot Manager to be setup for a hard disk.
 Syntax:
   SETBOOT [/Q]
@@ -1138,7 +1160,7 @@ where the parameters are:
             drive specified as "d".
   IBA:name  Shuts down and then restarts the computer from the system
             specified as "name".
-´£SYS0868I: An error occurred when accessing the hard disk.
+SYS0868I: An error occurred when accessing the hard disk.
 SYS0869I: The system is not setup for Boot Manager.
 SYS0870I: No value is allowed for %1.
 SYS0871I: A value is required for %1.
@@ -1274,6 +1296,7 @@ SYS1000?:
 SYS1001E: An incorrect parameter was entered for the command.
 SYS1002E: %1 is an incorrect parameter for the command.
 SYS1003E: The syntax of the command is incorrect.
+****** Prompt Need special:  28    27
 SYS1004P: Loading, please wait. %1.
 
 SYS1005?: 
@@ -1287,6 +1310,7 @@ SYS1011E: No clusters are available on volume %1.
 SYS1012?: 
 SYS1013?: 
 SYS1014?: 
+****** Prompt Need special:  58    57
 SYS1015P: Press Enter to begin recovery of the files on drive %1.
 
 SYS1016?: 
@@ -1305,7 +1329,9 @@ SYS1028?:
 SYS1029?: 
 SYS1030?: 
 SYS1031?: 
+****** Prompt Need special:  32    31
 SYS1032P: Press any key when ready . . . 
+****** Prompt Need special:  19    18
 SYS1033P: %1, Delete (Y/N)? 
 SYS1034E: The system cannot find the command processor in the path
 specified.
@@ -1343,11 +1369,14 @@ SYS1063?:
 SYS1064?: 
 SYS1065E: The input line is too long.
 SYS1066E: The contents of the target file were lost.
+****** Prompt Need special:  81    80
 SYS1067P: Insert the diskette that contains the batch file
 and press any key when ready. 
+****** Prompt Need special:  36    35
 SYS1068P: 
 Enter the new date: (mm%1dd%1yy) 
 SYS1069E: UNC path names are not supported by this command.
+****** Prompt Need special:  23    22
 SYS1070P: 
 Enter the new time: 
 SYS1071E: The handle could not be duplicated during redirection of
@@ -1365,6 +1394,7 @@ SYS1081E:
 CMD.EXE has halted. SYS1082I: The Process Identification Number is %1.
 SYS1083E: A duplicate file name exists, the file cannot be found, or
 the file is being used.
+****** Prompt Need special:  25    24
 SYS1084P: %1, Are you sure (Y/N)? 
 SYS1085?: 
 SYS1086E: The following character string is too long:
@@ -1374,6 +1404,7 @@ SYS1088I:  %1      %2       %3      %4    %5      %6     %7   Ready
 SYS1089I:  %1      %2       %3      %4    %5      %6     %7   Block
 SYS1090I: The Operating System/2 Version is %1.%2 SYS1091I:  %1      %2       %3      %4    %5      %6     %7  Suspend
 SYS1092E: The handle could not be duplicated during a pipe operation.
+****** Prompt Need special:  7    6
 SYS1093P: More? 
 SYS1094I:  %1      %2       %3      %4    %5      %6     %7  CritSec
 SYS1095I:  %1      %2       %3      %4    %5      %6     %7  Running
@@ -1401,7 +1432,10 @@ another device.
 SYS1116I: The interrupt level is not available.
 SYS1117I: Advanced BIOS is not present.
 SYS1118E: There is no further help available for this message.
-SYS1119I: Revision %1.%2 SYS1120I: 
+SYS1119I: Revision %1.%2 ********** Bump buffer
+Old: 881   New: 998   Current: 884
+Buff actual:  1004
+SYS1120I: 
                  ßßßßßßßß   ßßßßßßßßßß     ßßßßßß       ßßßßßß
                  ßßßßßßßß   ßßßßßßßßßßßß   ßßßßßßß     ßßßßßßß
                    ßßßß      ßßßß   ßßßß    ßßßßßßß   ßßßßßßß
@@ -1425,12 +1459,19 @@ SYS1119I: Revision %1.%2 SYS1120I:
 
            Insert OS/2 Diskette %1
            into drive A. Then, press Enter.
+****** Prompt Need special:  4    3
 SYS1121P: Sun
+****** Prompt Need special:  4    3
 SYS1122P: Mon
+****** Prompt Need special:  4    3
 SYS1123P: Tue
+****** Prompt Need special:  4    3
 SYS1124P: Wed
+****** Prompt Need special:  4    3
 SYS1125P: Thu
+****** Prompt Need special:  4    3
 SYS1126P: Fri
+****** Prompt Need special:  4    3
 SYS1127P: Sat
 SYS1128E: An incorrect process ID was entered for the command.
 SYS1129I: 
@@ -1460,8 +1501,10 @@ SYS1136I:
   Name       ID        ID      Library List
 SYS1137E: The source path is missing.
 SYS1138I:  %1   %2       %3      %4
+****** Prompt Need special:  37    36
 SYS1139P: Press Enter to begin adding files.
 
+****** Prompt Need special:  40    39
 SYS1140P: Press Enter to begin replacing files.
 
 SYS1141E: The system cannot find the files specified: %1.
@@ -1482,7 +1525,9 @@ SYS1148I: No files were added.
 SYS1149I: %1 file(s) added.
 SYS1150I: No files were replaced.
 SYS1151I: %1 file(s) replaced.
+****** Prompt Need special:  30    29
 SYS1152P: Do you want to add %1 (Y/N)? 
+****** Prompt Need special:  34    33
 SYS1153P: Do you want to replace %1 (Y/N)? 
 SYS1154I: Adding file %1.
 SYS1155I: Replacing file %1.
@@ -1491,9 +1536,12 @@ SYS1157?:
 SYS1158?: 
 SYS1159?: 
 SYS1160?: 
+****** Prompt Need special:  42    41
 SYS1161P: Do you want to compare more files (Y/N)? 
+****** Prompt Need special:  29    28
 SYS1162P: Enter the first file name.
 
+****** Prompt Need special:  30    29
 SYS1163P: Enter the second file name.
 
 SYS1164I: The files compare OK.
@@ -1580,15 +1628,20 @@ The \OS2\OS2.INI file was renamed to %2.
 The \OS2\OS2SYS.INI file was renamed to %3.
 
 These files were restored from copies in the \OS2\INSTALL subdirectory.
+****** Prompt Need special:  36    35
 SYS1208P: 
 Enter the new date: (yy%1mm%1dd) 
+****** Prompt Need special:  36    35
 SYS1209P: 
 Enter the new date: (dd%1mm%1yy) 
 SYS1210E: The process cannot be completed.  You are using an incorrect
 version of the operating system.
+****** Prompt Need special:  26    25
 SYS1211P: Abort, Retry, or Ignore? 
+****** Prompt Need special:  29    28
 SYS1212P: Press any key to continue.
 
+****** Prompt Need special:  34    33
 SYS1213P: Enter the new date: (yy%1dd%1mm) 
 SYS1214?: 
 SYS1215?: 
@@ -1643,9 +1696,11 @@ SYS1228I:       %1        %2      Delayed    %3    %4
 SYS1229I:       %1        %2      Frozen     %3    %4
 SYS1230I:       %1        %2      GetStack   %3    %4
 SYS1231E: The system cannot accept the drive specified or a hard disk.
+****** Prompt Need special:  43    42
 SYS1232P: Insert the source diskette in drive %1
 
 
+****** Prompt Need special:  43    42
 SYS1233P: Insert the target diskette in drive %1
 
 
@@ -1654,6 +1709,7 @@ type.
 SYS1235E: Target diskette is bad or incompatible with the drive type.
 SYS1236I: These diskettes can be compared only in OS2 mode.
 SYS1237I: %1 percent of the disk has been compared.
+****** Prompt Need special:  33    32
 SYS1238P: Compare another diskette (Y/N)? 
 SYS1239I: Comparing %1 tracks
 %2 sectors per track, %3 side(s).
@@ -1663,7 +1719,9 @@ SYS1242I: Comparison error on side %1 track %2.
 SYS1243I: The Volume Serial Number is %1.
 SYS1244I: Compare has ended.
 SYS1245I: The compared diskettes are identical.
+****** Prompt Need special:  32    31
 SYS1246P: Enter the source drive letter: 
+****** Prompt Need special:  32    31
 SYS1247P: Enter the target drive letter: 
 SYS1248E: A subdirectory or file %1 already exists.
 SYS1249I: Error occurred while processing: %1.
@@ -1685,10 +1743,13 @@ eXtended Density Format (XDF).
 SYS1254I: %1 percent of the disk has been copied.
 SYS1255I: The target diskette may be unusable.
 SYS1256I: This diskette can be copied only in OS/2 mode.
+****** Prompt Need special:  84    83
 SYS1257P: You must copy to a formatted diskette.
 Do you want to try another diskette (Y/N)? 
+****** Prompt Need special:  77    76
 SYS1258P: This function might require many disk swaps.
 Do you want to proceed (Y/N)? 
+****** Prompt Need special:  30    29
 SYS1259P: Copy another diskette (Y/N)? 
 SYS1260I: Copying %1 tracks %2 sectors per track, %3 side(s).
 SYS1261E: An error occurred while reading from the source diskette.
@@ -1704,10 +1765,13 @@ SYS1267E: The system is unable to determine the optical disc type.
 SYS1268E: The optical disc or disc type is not supported by this drive.
 SYS1269E: An error occurred while copying the Information Transfer
 Block (ITB).
+****** Prompt Need special:  52    51
 SYS1270P: Insert a new diskette in drive %1 and press Enter. 
+****** Prompt Need special:  78    77
 SYS1271P: Warning!  All data on hard disk %1 will be lost!
 Proceed with FORMAT (Y/N)? 
 SYS1272I: The system files have been transferred.
+****** Prompt Need special:  32    31
 SYS1273P: Format another diskette (Y/N)? 
 SYS1274E: The size of the requested volume exceeds 2,048MB.
 SYS1275E: The /S parameter is not supported in this release of OS/2.
@@ -1717,6 +1781,7 @@ Enter.
 SYS1279E: The format was unsuccessful.
 SYS1280E: The disk is unsuitable for a system disk.
 SYS1281E: Track 0 cannot be formatted.
+****** Prompt Need special:  68    67
 SYS1282P:                                                                    
 SYS1283I: %1 bytes total disk space
 SYS1284I: %1 bytes used by system files
@@ -1725,6 +1790,7 @@ SYS1286I: %1 bytes available on disk
 SYS1287I: The format size you specified does not match the diskette
 capacity.  However, the system will continue to format the diskette
 to the specified size.
+****** Prompt Need special:  85    84
 SYS1288P: Enter up to 11 characters for the volume label
 or press Enter for no volume label. 
 SYS1289E: The volume label was written to the disk without leading
@@ -1749,18 +1815,22 @@ SYS1305I: %1 total allocation units.
 SYS1306I: %1 available allocation units on disk.
 SYS1307?: 
 SYS1308?: 
+****** Prompt Need special:  83    82
 SYS1309P: Formatting this disk might take up to %1 minutes.
 Do you want to continue (Y/N)? 
 SYS1310E: A drive letter must be specified.
 SYS1311E: The system files are missing.
 SYS1312I: %1 percent of disk formatted %2SYS1313E: An error has occurred while reading or writing to the hard
 disk volume.
+****** Prompt Need special:  83    82
 SYS1314P: Lost extended attributes were found.
 Do you want to display them as files (Y/N)? 
+****** Prompt Need special:  123    122
 SYS1315P: Lost extended attributes will be erased if they are not
 converted to files.  Do you want to convert them to files (Y/N)? 
 SYS1316E: The version of extended attributes is incorrect.
 SYS1317I: An extended attributes error was found and corrected.
+****** Prompt Need special:  45    44
 SYS1318P: Enter the current volume label for drive %1 
 SYS1319E: Incorrect volume label entered for drive %1
 SYS1320E: The file FORMATS.TBL is missing or an error occurred while
@@ -1801,6 +1871,7 @@ SYS1344I:
 The first cluster number of %1 is incorrect.
 The entry has been truncated.
 SYS1345I: CHKDSK encountered an unrecoverable error in directory %1.
+****** Prompt Need special:  35    34
 SYS1346P: Convert directory to file (Y/N)?  
 SYS1347E: %1 directory is totally empty.
 The tree past this point is not processed.
@@ -1814,6 +1885,7 @@ SYS1353I:
 %1 lost clusters found in %2 chains.
 Do you want to display them as files(Y/N)? SYS1354E: The system could not change the capacity of the diskette.
 SYS1355I: %1 does not exist.
+****** Prompt Need special:  161    160
 SYS1356P: 
 %1 lost clusters found in %2 chains.
 These clusters and chains will be erased unless you convert
@@ -1843,6 +1915,7 @@ entry %1.
 SYS1377E: The system is unable to write to the root directory on
 drive %1.
 SYS1378?: 
+****** Prompt Need special:  83    82
 SYS1379P: The system has detected a probable non-DOS disk.
 Do you want to continue? (Y/N)  
 SYS1380W: A disk error occurred while reading directory entry %1.
@@ -1858,6 +1931,7 @@ SYS1386E: The CREATEDD utility cannot continue.
 SYS1387E: The CREATEDD utility cannot find the diskette drive specified.
 SYS1388I: Dump data exists on the diskette.  Insert another CREATEDD
 diskette.  Press Enter to continue.
+****** Prompt Need special:  57    56
 SYS1389P: Are you using a %1 megabyte diskette in drive %2 (Y/N)? 
 SYS1390I: The program ended prior to completion.
 SYS1391I: The memory dump has completed.  Remove the dump diskette and
@@ -1866,9 +1940,11 @@ SYS1392E: This diskette cannot be used with the CREATEDD utility.
 SYS1393I: The storage address ranges on this diskette are:
 SYS1394I: The OS/2 Memory Dump Facility is being initiated.  A memory
 dump will be performed.
+****** Prompt Need special:  104    103
 SYS1395P: Insert the dump diskette created by the CREATEDD utility
 into drive A and press any key to continue.
 
+****** Prompt Need special:  89    88
 SYS1396P: Diskette error.  Insert another CREATEDD dump diskette and
 press any key to continue.
 
@@ -1891,6 +1967,7 @@ SYS1404E: The command is ignored because the TRACE utility detected a
 syntax error.
 SYS1405E: The TRACE utility has detected an oversize error in %1.
 This file is ignored.
+****** Prompt Need special:  29    28
 SYS1406P: Press Enter to continue...
 
 SYS1407E: The TRACE utility has detected an error in %1.
@@ -1913,6 +1990,7 @@ SYS1416I: Dump data exists on the diskette.  Insert another CREATEDD
 diskette.  Press Enter to continue.
 SYS1417E: The resources for this application are not available.
 SYS1418I: The storage address ranges on this diskette are:
+****** Prompt Need special:  29    28
 SYS1419P: Press any key to continue.
 
 SYS1420?: 
@@ -1981,6 +2059,9 @@ SYS1468I: 0Return error code to program
 6Redisplay error message
 Detached Process ID
 Pop-up Process ID
+********** Bump buffer
+Old: 1003   New: 2026   Current: 1004
+Buff actual:  2036
 SYS1469I: ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
 ³   %%                                                                        ³
 ³                                                                             ³
@@ -2040,6 +2121,7 @@ of digits.
 SYS1489I: The message ID number was not entered (for example,
 HELP 0123).  Enter the desired message ID number.
 SYS1490E: The system cannot find %1.
+****** Prompt Need special:  385    384
 SYS1491P: 
 o  Alt+Esc to switch to the next session.
 o  Ctrl+Esc to switch to the Window List.
@@ -2051,9 +2133,11 @@ o  Type HELP OFF for no help text.
 o  Type EXIT to end this OS/2 session.
 
 
+****** Prompt Need special:  58    57
 SYS1492P: OS/2      Ctrl+Esc = Window List       Type HELP = help
 
 SYS1493I: No help is available for the message ID number requested.
+****** Prompt Need special:  316    315
 SYS1494P: 
 o  Alt+Esc to switch to the next session.
 o  Ctrl+Esc to switch to the Window List.
@@ -2064,6 +2148,7 @@ o  Type HELP OFF for no help text.
 o  Type EXIT to end this DOS session.
 
 
+****** Prompt Need special:  133    132
 SYS1495P:   DOS      Ctrl+Esc = Window List                             Type HELP = help                                                      
 SYS1496I: The message file %1 cannot be found.  It is
 possible that the application you are using does not have a message
@@ -2085,12 +2170,14 @@ incorrect.  Wait for the other process to finish or reinstall
 the message file.  Retry the command.
 SYS1498E: VIEW cannot be found.
 SYS1499?: 
+****** Prompt Need special:  216    215
 SYS1500P: 
 ***************************************************
 * Insert the diskette containing the swap file in *
 *   drive %1 and close the drive door.            *
 ***************************************************
 
+****** Prompt Need special:  216    215
 SYS1501P: 
 ***************************************************
 *  Remove the write protection from the diskette  *
@@ -2125,6 +2212,7 @@ diskette for file system %1.
 SYS1513?: 
 SYS1514I: 
 Volume in drive %1 has no label.
+****** Prompt Need special:  90    89
 SYS1515P: Enter a volume label of up to 11 characters
 or press Enter for no volume label update.  
 SYS1516I: 
@@ -2160,6 +2248,7 @@ SYS1533E: %1 file not found.
 SYS1534?: 
 SYS1535?: 
 SYS1536?: 
+****** Prompt Need special:  15    14
 SYS1537P: Enter choice: 
 SYS1538?: 
 SYS1539?: 
@@ -2186,8 +2275,10 @@ SYS1559?:
 SYS1560?: 
 SYS1561?: 
 SYS1562?: 
+****** Prompt Need special:  55    54
 SYS1563P: %1 is not a correct choice.  Enter a correct choice.
 
+****** Prompt Need special:  44    43
 SYS1564P: %1 is not a correct choice.  Enter Y or N
 
 SYS1565I: No hard disks are present.
@@ -2206,13 +2297,16 @@ SYS1576E: The data specified in the patch control file was incomplete.
 SYS1577?: 
 SYS1578?: 
 SYS1579I: Patching %1
+****** Prompt Need special:  44    43
 SYS1580P: Do you want to continue patching %1 (Y/N)? 
 SYS1581I: No patches applied.
 SYS1582I: Patches entered for %1
+****** Prompt Need special:  48    47
 SYS1583P: Do you want these patches applied to %1 (Y/N)? 
 SYS1584I: Patches applied to %1
 SYS1585I: No patches applied to %1
 SYS1586I: End of file is at %1
+****** Prompt Need special:  40    39
 SYS1587P: Enter the hexadecimal offset of patch: 
 SYS1588E: The offset is beyond the end of the file.
 SYS1589E: The number of patches exceeds the limit of PATCH.
@@ -2245,6 +2339,7 @@ SYS1609I: Asynchronous communications mode has been set.
 SYS1610I: MODE DSKT VER=%1
 SYS1611I: The parallel printer cannot be redirected to a communication
 device.  Use the SPOOL utility to redirect the output.
+****** Prompt Need special:  108    107
 SYS1612P: Insert a diskette in drive A and press Enter to continue
 or press CTRL+Break to cancel the MODE command.
 
@@ -2272,28 +2367,35 @@ SYS1632E: The MODE parameter parity %1 is incorrect.
 SYS1633E: The MODE parameter %1 is incorrect.
 SYS1634I: 
 Files will be restored from drive %1:
+****** Prompt Need special:  68    67
 SYS1635P: 
 Insert backup diskette %1 in drive %2:
 Press Enter when ready.
 
+****** Prompt Need special:  97    96
 SYS1636P: 
 Warning!  The diskette is out of sequence.
 Replace the diskette or press Enter to continue.
 
+****** Prompt Need special:  68    67
 SYS1637P: 
 Warning!  File %1 is a read-only file.
 Replace the file (Y/N)?
 
+****** Prompt Need special:  75    74
 SYS1638P: Warning!  File %1 was changed after the backup.
 Replace the file (Y/N)?
 
+****** Prompt Need special:  77    76
 SYS1639P: 
 Operating system files are restored.
 The target disk may not be usable.
 
+****** Prompt Need special:  36    35
 SYS1640P: 
 The files were backed up on %1.
 
+****** Prompt Need special:  5    4
 SYS1641P: %1
 
 SYS1642E: 
@@ -2316,8 +2418,10 @@ SYS1653?:
 SYS1654?: 
 SYS1655I: 
 The system cannot restore the file.
+****** Prompt Need special:  14    13
 SYS1656P: Diskette %1
 
+****** Prompt Need special:  77    76
 SYS1657P: 
 Insert the RESTORE target diskette in drive %1.
 Press Enter when ready.
@@ -2356,16 +2460,20 @@ target drive %1: will be erased.
 
 Press Enter to continue or Ctrl+Break to cancel.
 SYS1683I: The files are being backed up to drive %1.
+****** Prompt Need special:  21    20
 SYS1684P: Diskette number %1
 
 SYS1685I: The system cannot find any files to back up.
+****** Prompt Need special:  93    92
 SYS1686P: Insert a backup source diskette in %1:
 
 Press Enter to continue or Ctrl+Break to cancel.
 
+****** Prompt Need special:  41    40
 SYS1687P: Insert backup diskette %1 in drive %2:
 
 SYS1688E: The file cannot be backed up at this time.
+****** Prompt Need special:  99    98
 SYS1689P: Insert the last backup diskette in drive %1:
 
 Press Enter to continue or Ctrl+Break to cancel.
@@ -2376,11 +2484,13 @@ is full.
 SYS1692I: Target hard disk %1: is full.
 SYS1693E: The system cannot create the directory.
 SYS1694E: The path name is too long.
+****** Prompt Need special:  9    8
 SYS1695P:  (Y/N)? 
 SYS1696?: 
 SYS1697I: Source files are being read...
 SYS1698?: 
 SYS1699I: %1 file or directory cannot be found.
+****** Prompt Need special:  205    204
 SYS1700P: The current target for XCOPY, %1,
 can be a directory or file name and must be specified.  Respond Y
 if the target is a directory or N if the target is a file name.
@@ -2442,6 +2552,7 @@ CONFIG.SYS file.
 SYS1724I: The system cannot open the CON: file that is needed to
 start the system.
 SYS1725I: The handle for the CON: file is not zero.
+****** Prompt Need special:  29    28
 SYS1726P: Press Enter to continue...
 
 SYS1727E: The system does not have enough memory for the DISKCACHE
@@ -2459,6 +2570,7 @@ SYS1735I: The system has assumed code page %1.
 SYS1736E: The DOS.SYS device driver cannot be found.
 SYS1737I: Code page switching is not available.
 SYS1738E: The system has detected an error when starting.
+****** Prompt Need special:  32    31
 SYS1739P: Do you want to continue (Y/N)? 
 SYS1740W: Warning!  DOS system files were not found, so DOS cannot be started.
 If you continue, the OS/2 system files will be saved, and then you may
@@ -2471,6 +2583,7 @@ SYS1742E: The KEYB command has detected an error reading the
 translation table file for the keyboard.
 SYS1743?: 
 SYS1744E: A system error has occurred.
+****** Prompt Need special:  146    145
 SYS1745P: Code page %1 is not available for the requested country
 keyboard.  Do you want to load the translation table for the default
 code page (Y/N)?
@@ -2515,9 +2628,11 @@ SYS1774?:
 SYS1775I: There are no currently printing files in the print queue.
 Check the Print Destination print queue to determine the current
 status of the requested print file.
+****** Prompt Need special:  126    125
 SYS1776P: There are too many printer queues associated with the device.
 Your job request is queued to print and cannot be cancelled.
 
+****** Prompt Need special:  124    123
 SYS1777P: There are no printer queues associated with the device.
 Your job request is not queued to print and cannot be cancelled.
 
@@ -2546,6 +2661,7 @@ command is busy and cannot be used by the spooler.  The device is in
 use by a previous spool command.
 SYS1795I: An unexpected error was detected from Presentation Manager.
 The SPOOL command received a return code it did not understand.
+****** Prompt Need special:  152    151
 SYS1796P: The SPOOL directory parameter is no longer supported or an
 invalid parameter was entered.  SPOOL will ignore the parameter and
 continue processing.
@@ -2677,11 +2793,14 @@ SYS1858?:
 SYS1859?: 
 SYS1860?: 
 SYS1861?: 
+****** Prompt Need special:  15    14
 SYS1862P: Are you sure? 
 SYS1863?: 
 SYS1864?: 
+****** Prompt Need special:  47    46
 SYS1865P: Press Esc to return to the operating system.
 
+****** Prompt Need special:  5    4
 SYS1866P: %1
 
 SYS1867?: 
@@ -2966,6 +3085,7 @@ SYS1989?:
 SYS1990?: 
 SYS1991E: The command or program is not compatible with the version
 of OS/2 being used. $
+****** Prompt Need special:  4    3
 SYS1992P: y
 
 SYS1993E: No file name was specified.
@@ -2979,11 +3099,13 @@ SYS2000?:
 SYS2001E: EDLIN cannot continue because of a syntax error.
 SYS2002I: EDLIN has created a new file.
 SYS2003I: The string specified cannot be found.
+****** Prompt Need special:  8    7
 SYS2004P: O.K.?
 
 SYS2005E: EDLIN cannot continue because the line is longer than
 253 characters.
 SYS2006I: The entire input file has been read.
+****** Prompt Need special:  37    36
 SYS2007P: Do you want to end the edit (Y/N)?
 
 SYS2008E: EDLIN cannot continue unless a destination line number is specified.
@@ -3026,6 +3148,7 @@ SYS2024I: The Hebrew version (862) of the graphic code-page table is
 currently loaded.
 SYS2025I: A disk-read error occurred.
 SYS2026I: The file OS2LDR cannot be found.  A diskette is in drive A.
+****** Prompt Need special:  51    50
 SYS2027P: Insert a system diskette and restart the system.
 
 SYS2028I: The system cannot find the OS2KRNL file.
@@ -3099,6 +3222,7 @@ SYS2074E: Logging cannot be resumed.  The return code is %1.
 SYS2075?: 
 SYS2076I: DOS Command Prompt
 SYS2077I: More:
+****** Prompt Need special:  19    18
 SYS2078P: Program Selector
 
 SYS2079?: 
@@ -4064,6 +4188,7 @@ external command, an operable program, or a batch file.
 SYS3015E: An attempt to reload COMMAND.COM failed.
 SYS3016E: This session was halted because COMMAND.COM cannot be loaded.
 SYS3017E: COMMAND.COM cannot be started.
+****** Prompt Need special:  65    64
 SYS3018P: Insert disk with %1 in drive %2 and
 press any key when ready.
 
@@ -4418,6 +4543,7 @@ SYS3077I: Global file-name characters such as ? or * are not permitted
 in a path name.  Retype the command without the global file-name
 characters.
 SYS3078E: A file name must be specified.
+****** Prompt Need special:  31    30
 SYS3079P: 
 Terminate batch file (Y/N)? 
 SYS3080I: A critical disk error occurred while starting COMMAND.COM.
@@ -4919,8 +5045,10 @@ SYS3196I: An error occurred while opening the control file.  The error
 occurred while attempting to open system control files in the temporary
 storage directory for the specified disk.
 SYS3197E: This version of the control file is incorrect.
+****** Prompt Need special:  42    41
 SYS3198P: Do you want to discard this file (Y/N)?
 
+****** Prompt Need special:  43    42
 SYS3199P: Do you wish to undelete this file (Y/N)?
 
 SYS3200E: The file %1 cannot be undeleted.
@@ -4932,9 +5060,11 @@ SYS3203E: No matching files were found.
 SYS3204I: Discarding %1.
 SYS3205I: Undeleting %1.
 SYS3206E: An error occurred while creating directory %1.
+****** Prompt Need special:  106    105
 SYS3207P: A file named %1 already exists in this directory.
 Type a new filename here or press Enter to continue.
 
+****** Prompt Need special:  84    83
 SYS3208P: %1 is not a valid filename.
 Type a new filename here or press Enter to continue.
 
