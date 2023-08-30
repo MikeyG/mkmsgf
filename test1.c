@@ -18,6 +18,8 @@
 
 int readheader(char *filename, MESSAGEINFO *messageinfo);
 int readmessages(MESSAGEINFO *messageinfo);
+int getmessages(FILE *fp, unsigned long msgcurrent,
+                unsigned long msg_next, unsigned long msgcount);
 
 /* main( )
  *
@@ -215,21 +217,6 @@ int readheader(char *filename, MESSAGEINFO *messageinfo)
     else if ((messageinfo->indexsize / 4) != messageinfo->numbermsg)
         return (MKMSG_INDEX_ERROR);
 
-    // Since we will determine a message length from the message index
-    // contents (next message offset - current message offset) there will
-    // be an issue with the last message, there is no next message offset).
-    // However, if (messageinfo->extenblock) is true then it can be used.
-    // If (messageinfo->extenblock) is false then seek to get end of file
-    // and add 1 which will be used as the (final next message offset).
-    if (messageinfo->extenblock)
-        messageinfo->msgfinalindex = messageinfo->extenblock;
-    else
-    {
-        fseek(fp, 0L, SEEK_END);
-        // don't panic - I need eof + 1
-        messageinfo->msgfinalindex = ftell(fp) + 1;
-    }
-
     // close up and get out
     fclose(fp);
     free(header);
@@ -244,160 +231,168 @@ int readmessages(MESSAGEINFO *messageinfo)
     uint32_t *large_index = NULL;
 
     // start of message area
-    unsigned long msg_curr = 0;
+    unsigned long msgcurrent = 0;
     unsigned long msg_next = 0;
     unsigned long msgcount = 0;
 
-    // track size of message read buffer
-    unsigned long msglenbuffer = 80;
+    unsigned long msglenbuffer = 80; // track size of message read buffer
 
-    unsigned long current_msg_len = 0;
-
-    char msginfo[10] = {0};  // message header
+    // plan ahead Comp_ID (3) + Msg_Num (4) + Msg_Type (1) + ": " (2) = 10
+    char msginfo[10] = {0};
     char msg_type;           // message type
     char *scratchptr = NULL; // scratch pointer
 
-    char *outputfile = "out.txt";
+    // buffer to read in a message - start with a 80 size buffer
+    // if for some reason bigger is needed realloc latter
+    char *msgbuffer = (char *)calloc(msglenbuffer, sizeof(char));
+    if (msgbuffer == NULL)
+        return (MKMSG_MEM_ERROR);
+
+    // write buffer early to 2 bytes - realloc later
+    char *write_buffer = (char *)calloc(10, sizeof(char));
+    if (write_buffer == NULL)
+        return (MKMSG_MEM_ERROR);
 
     // open input file
-    FILE *fpi = fopen(messageinfo->filename, "rb");
-    if (fpi == NULL)
+    FILE *fp = fopen(messageinfo->filename, "rb");
+    if (fp == NULL)
         return (MKMSG_OPEN_ERROR);
 
-    // write output file
-    FILE *fpo = fopen(outputfile, "wb");
-    if (fpo == NULL)
-        return (MKMSG_OPEN_ERROR);
+    // first thing to do is find the end of the message block
+    // if messageinfo.extenblock holds an offset - that is the end
+    // of our root message block else we will seek to the end of the
+    // file to get the end
+    if (messageinfo->extenblock)
+        messageinfo->msgendofblock = messageinfo->extenblock;
+    else
+    {
+        fseek(fp, 0L, SEEK_END);
+        messageinfo->msgendofblock = ftell(fp);
+    }
+
+    // seek to the start of index for read
+    fseek(fp, messageinfo->indexoffset, SEEK_SET);
 
     // buffer to read in index
     char *index_buffer = (char *)calloc(messageinfo->indexsize, sizeof(char));
     if (index_buffer == NULL)
         return (MKMSG_MEM_ERROR);
 
-    // buffer to read in a message - start with a 80 size buffer
-    // if for some reason bigger is needed realloc latter
-    char *read_buffer = (char *)calloc(msglenbuffer, sizeof(char));
-    if (read_buffer == NULL)
-        return (MKMSG_MEM_ERROR);
-
-    // write buffer early to msglenbuffer bytes - realloc later
-    char *write_buffer = (char *)calloc(msglenbuffer, sizeof(char));
-    if (write_buffer == NULL)
-        return (MKMSG_MEM_ERROR);
-
-    // seek to the start of index for read
-    fseek(fpi, messageinfo->indexoffset, SEEK_SET);
-
     // read index into buffer
-    int read = fread(index_buffer, sizeof(char), messageinfo->indexsize, fpi);
-    if (ferror(fpi))
+    int read = fread(index_buffer, sizeof(char), messageinfo->indexsize, fp);
+    if (ferror(fp))
         return (MKMSG_READ_ERROR);
 
-    // pick the pointer based on index uint16 or uint32
     if (messageinfo->offsetid)
         small_index = (uint16_t *)index_buffer;
     else
         large_index = (uint32_t *)index_buffer;
 
-    // main read - write loop
     for (int x = 0; x < messageinfo->numbermsg; x++)
     {
         // do the message number counting
         msgcount = messageinfo->firstmsg + x;
 
+        // msg length initially from
+        int16_t msg_length = 0;
+
         // handle the uint16 and uint32 index differences
+        // get offset to current and next message
         if (messageinfo->offsetid)
         {
-            msg_curr = (unsigned long)*small_index++;
+            msgcurrent = (unsigned long)*small_index++;
             msg_next = (unsigned long)*small_index;
         }
         else
         {
-            msg_curr = *large_index++;
+            msgcurrent = *large_index++;
             msg_next = *large_index;
         }
 
         // if we are on the last message then the msg_next
         // needs to be the end of the message block + 1 as calculated
         // with the fseek to end above.
-        // As a note, I am going to use msg_curr and msg_next to
+        // As a note, I am going to use msgcurrent and msg_next to
         // get the message length.
         if (x == (messageinfo->numbermsg - 1))
-            msg_next = messageinfo->msgfinalindex;
-
-        // just calc current message length for readability
-        current_msg_len = (msg_next - msg_curr);
+            msg_next = messageinfo->msgendofblock;
 
         // seek to the start of message to read
-        fseek(fpi, msg_curr, SEEK_SET);
+        fseek(fp, msgcurrent, SEEK_SET);
+
+        // determine message length from current offset
+        // and next message offset
+        msg_length = (msg_next - msgcurrent);
 
         // check read buffer size -- Do we need a bigger buffer?
         // Note: the +5 size is to give me room for %0 or <CR>
-        // and I am paranoid :)
-        if ((current_msg_len + 5) > msglenbuffer)
+        if ((msg_length + 5) > msglenbuffer)
         {
-            msglenbuffer = current_msg_len + 5; // new buffer size
-            read_buffer = (char *)realloc(read_buffer, (msglenbuffer));
-            if (read_buffer == NULL)
+            msglenbuffer = msg_length + 5; // new buffer size
+            msgbuffer = (char *)realloc(msgbuffer, msglenbuffer);
+            if (msgbuffer == NULL)
+            {
+                fclose(fp);
+                free(msgbuffer);
+                free(index_buffer);
                 return (MKMSG_MEM_ERROR);
+            }
         }
 
-        // clear the read_buffer -- set all to 0x00
-        memset(read_buffer, 0x00, msglenbuffer);
+        // clear the msgbuffer -- set all to 0x00
+        memset(msgbuffer, 0x00, msglenbuffer);
 
         // read in the message
-        fread(read_buffer, sizeof(char), current_msg_len, fpi);
+        fread(msgbuffer, sizeof(char), msg_length, fp);
 
-        // As a side note - any message can use the <CR> option!
-        // If the original message ended with %0, it is then compiled
-        // without a <CR>. So we need to check each input line for
-        // 0x0D 0x0A and if does not exist then add %0 and 0x0D 0x0A
+        msg_type = msgbuffer[0];
 
-        // check for 0x0A and 0x0D at end of message
-        if (read_buffer[(current_msg_len - 1)] != 0x0A &&
-            read_buffer[(current_msg_len - 2)] != 0x0D)
+        // handle P message type by appending %O
+        if (msg_type == 'P')
         {
-            read_buffer[(current_msg_len + 0)] = '%';
-            read_buffer[(current_msg_len + 1)] = '0';
-            read_buffer[(current_msg_len + 2)] = 0x0D;
-            read_buffer[(current_msg_len) + 3] = 0x0A;
-            current_msg_len += 4;
+            msgbuffer[msg_length] = '%';
+            msgbuffer[msg_length + 1] = '0';
+
+            // add 2 to the message length
+            msg_length += 2;
         }
 
-        // get the type of message
-        msg_type = read_buffer[0];
+        // move past msg type and subtract 1
+        *msgbuffer++;
+        msg_length -= 1;
 
-        // set up pointer to skip Msg_Type (1) and other
-        scratchptr = read_buffer;
-        *scratchptr++;
+        // plan ahead Comp_ID (3) + Msg_Num (4) +
+        // Msg_Type (1) + ": " (2) = 10
+        sprintf(msginfo, "%s%04d%c: ",
+                messageinfo->identifier,
+                msgcount, msgbuffer[0]);
 
-        // check write buffer size -- Do we need a bigger buffer?
-        // if ((current_out_len) > _msize(write_buffer))
-        //{
-        //    write_buffer = (char *)realloc(write_buffer, current_out_len);
-        //    if (read_buffer == NULL)
-        //        return (MKMSG_MEM_ERROR);
-        //}
-        // fwrite()
+        // setup early to 2 - realloc for each message:
+        // current length & msginfo
+        write_buffer = (char *)realloc(write_buffer, (msg_length + 10));
 
-        // plan ahead Comp_ID (3) + Msg_Num (4) + Msg_Type (1) + ": " (2) = 10
-        sprintf(msginfo, "%s%04d%c: ", messageinfo->identifier, msgcount, read_buffer[0]);
+        // !!XX!!
+        printf("%s\n", msginfo);
 
-        fwrite(msginfo, sizeof(msginfo), 1, fpo);
-        // fwrite(scratchptr, current_msg_len, 1, fpo);
-
-        printf("X: %d\n", sizeof(msginfo));
-        printf("%s%s", msginfo, scratchptr);
+        if (msg_type == 'P')
+            printf("\n");
     }
 
     printf("\n");
 
     // close up and get out
-    fclose(fpo);
-    fclose(fpi);
-    free(read_buffer);
+    fclose(fp);
     free(write_buffer);
+    free(msgbuffer);
     free(index_buffer);
+
+    return (0);
+}
+
+int getmessages(FILE *fp, unsigned long msgcurrent,
+                unsigned long msg_next, unsigned long msgcount)
+{
+    printf("%d  0x%02X  0x%02X    %lu\n", msgcount, msgcurrent, msg_next, (msg_next - msgcurrent));
 
     return (0);
 }

@@ -155,7 +155,7 @@ typedef struct _MESSAGEINFO
     uint16_t indexoffset;         // okay dup of hdroffset
     uint16_t indexsize;           // size in bytes of index
     uint32_t msgoffset;           // offset to start of messages
-    uint32_t msgendofblock;       // offset to end of messages
+    uint32_t msgfinalindex;       // offset to end of messages
 } MESSAGEINFO;
 
 // mkmsgf header signature - a valid MSG file alway starts with

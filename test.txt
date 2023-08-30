@@ -14,4 +14,8 @@ MAB0106?:
 MAB0107?:
 MAB0108P: Do you wish to apply these patches (Y or N)? %0
 MAB0109E: Divide overflow
-
+MAB0110P: Prompt with no 0 at end
+MAB0111I: Info with 0 at end%0
+MAB0112W: Warn with 0 at end%0
+MAB0113E: Err with 0 at end%0
+MAB0114H: Hlp with 0 at end %0
