@@ -133,7 +133,11 @@ typedef struct _MSGINFOL
 // Header of message file
 typedef struct _MESSAGEINFO
 {
-    char infile[_MAX_FNAME];
+    // mkmsgd options
+    char infile[_MAX_FNAME];      // input filename
+    char outfile[_MAX_FNAME];     // output filename
+    uint8_t verbose;              // how much to see?
+    // compile/decompile info
     uint8_t identifier[3];        // Identifier (SYS, DOS, NET, etc.)
     uint16_t numbermsg;           // Number of messages
     uint16_t firstmsg;            // Number of the first message

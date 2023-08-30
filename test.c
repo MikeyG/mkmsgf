@@ -16,17 +16,34 @@
 
 #include <io.h>
 
-int readheader(char *filename, MESSAGEINFO *messageinfo);
+int readheader(MESSAGEINFO *messageinfo);
 int readmessages(MESSAGEINFO *messageinfo);
 
+/*************************************************************************
+ * Function:  SysWildCard                                                 *
+ *                                                                        *
+ * Transforms a filename string using the specified wildcard pattern.     *
+ *                                                                        *
+ * Syntax:    call SysWildCard source, wildcard                           *
+ *                                                                        *
+ * Params:    source - Filename string to be transformed.                 *
+ *            wildcard - Wildcard pattern used to transform the           *
+ *                       source string.                                   *
+ *                                                                        *
+ * Return:    returns the transformed string. If an error occurs,         *
+ *            a null string ('') is returned.                             *
+ *************************************************************************/
 /* main( )
  *
  * Entry into the program
  */
+
 int main(int argc, char *argv[])
 {
 
     int rc;
+
+    char *outputfile = "out.txt";
 
     MESSAGEINFO messageinfo;
 
@@ -36,15 +53,18 @@ int main(int argc, char *argv[])
         return 1;
     }
 
-    rc = readheader(argv[1], &messageinfo);
+    strncpy(messageinfo.infile, argv[1], strlen(argv[1]));
+    strncpy(messageinfo.outfile, outputfile, strlen(outputfile));
 
-    if (rc != 0)
+    messageinfo.verbose = 1;
+
+    if (readheader(&messageinfo) != 0)
     {
         printf("RC: %d\n\n", rc);
         exit(rc);
     }
 
-    printf("*********** Header Info ***********\n\n");
+    printf("\n*********** Header Info ***********\n\n");
 
     printf("Input filename         %s\n", messageinfo.infile);
     printf("Component Identifier:  %s\n", messageinfo.identifier);
@@ -70,7 +90,7 @@ int main(int argc, char *argv[])
     printf("Language version ID:       %d\n", messageinfo.langversionID);
     printf("Number of codepages:       %d\n", messageinfo.codepagesnumber);
     for (int x = 0; x < messageinfo.codepagesnumber; x++)
-        printf("%02X (%d)  ", messageinfo.codepages[x], messageinfo.codepages[x]);
+        printf("0x%02X (%d)  ", messageinfo.codepages[x], messageinfo.codepages[x]);
     printf("\n");
     printf("File name:                 %s\n\n", messageinfo.filename);
     if (messageinfo.extenblock)
@@ -82,30 +102,47 @@ int main(int argc, char *argv[])
     else
         printf("** No an extended header **\n\n");
 
-    rc = readmessages(&messageinfo);
+    // decompile the messages
+    if (readmessages(&messageinfo) != 0)
+    {
+        printf("RC: %d\n\n", rc);
+        exit(rc);
+    }
 
     printf("\nEnd Decompile (%d)\n", rc);
+    
     return (rc);
 }
 
-/*
- *
- */
+/*************************************************************************
+ * Function:  readheader                                                 *
+ *                                                                        *
+ * Transforms a filename string using the specified wildcard pattern.     *
+ *                                                                        *
+ * Syntax:    call SysWildCard source, wildcard                           *
+ *                                                                        *
+ * Params:    source - Filename string to be transformed.                 *
+ *            wildcard - Wildcard pattern used to transform the           *
+ *                       source string.                                   *
+ *                                                                        *
+ * Return:    returns the transformed string. If an error occurs,         *
+ *            a null string ('') is returned.                             *
+ *************************************************************************/
 
-int readheader(char *filename, MESSAGEINFO *messageinfo)
+int readheader(MESSAGEINFO *messageinfo)
 {
     MSGHEADER1 *msgheader = NULL;
     FILECOUNTRYINFO1 *cpheader = NULL;
     EXTHDR *extheader = NULL;
 
     // check the input msg file exists
-    if (access(filename, F_OK) != 0)
+    if (access(messageinfo->infile, F_OK) != 0)
         return (MKMSG_INPUT_ERROR);
 
-    strcpy(messageinfo->infile, filename);
+    // strcpy(messageinfo->infile, filename);
 
     // open input file
-    FILE *fp = fopen(filename, "rb");
+    FILE *fp = fopen(messageinfo->infile, "rb");
     if (fp == NULL)
         return (MKMSG_OPEN_ERROR);
 
@@ -237,35 +274,46 @@ int readheader(char *filename, MESSAGEINFO *messageinfo)
     return (0);
 }
 
+/*************************************************************************
+ * Function:  readmessages                                                 *
+ *                                                                        *
+ * Transforms a filename string using the specified wildcard pattern.     *
+ *                                                                        *
+ * Syntax:    call SysWildCard source, wildcard                           *
+ *                                                                        *
+ * Params:    source - Filename string to be transformed.                 *
+ *            wildcard - Wildcard pattern used to transform the           *
+ *                       source string.                                   *
+ *                                                                        *
+ * Return:    returns the transformed string. If an error occurs,         *
+ *            a null string ('') is returned.                             *
+ *************************************************************************/
+
 int readmessages(MESSAGEINFO *messageinfo)
 {
     // index pointers
     uint16_t *small_index = NULL;
     uint32_t *large_index = NULL;
 
+    char msginfo[10] = {0};  // message header
+    char msg_type;           // message type
+    char *scratchptr = NULL; // scratch pointer
+
     // start of message area
     unsigned long msg_curr = 0;
     unsigned long msg_next = 0;
     unsigned long msgcount = 0;
 
-    // track size of message read buffer
-    unsigned long msglenbuffer = 80;
-
-    unsigned long current_msg_len = 0;
-
-    char msginfo[10] = {0};  // message header
-    char msg_type;           // message type
-    char *scratchptr = NULL; // scratch pointer
-
-    char *outputfile = "out.txt";
+    unsigned long msglenbuffer = 80;   // track size of message read buffer
+    unsigned long current_msg_len = 0; // current msg length
 
     // open input file
-    FILE *fpi = fopen(messageinfo->filename, "rb");
+    FILE *fpi = fopen(messageinfo->infile, "rb");
     if (fpi == NULL)
         return (MKMSG_OPEN_ERROR);
 
     // write output file
-    FILE *fpo = fopen(outputfile, "wb");
+    FILE *fpo = fopen(messageinfo->outfile, "wb");
     if (fpo == NULL)
         return (MKMSG_OPEN_ERROR);
 
@@ -337,7 +385,7 @@ int readmessages(MESSAGEINFO *messageinfo)
         if ((current_msg_len + 5) > msglenbuffer)
         {
             msglenbuffer = current_msg_len + 5; // new buffer size
-            read_buffer = (char *)realloc(read_buffer, (msglenbuffer));
+            read_buffer = (char *)realloc(read_buffer, msglenbuffer);
             if (read_buffer == NULL)
                 return (MKMSG_MEM_ERROR);
         }
@@ -367,30 +415,33 @@ int readmessages(MESSAGEINFO *messageinfo)
         // get the type of message
         msg_type = read_buffer[0];
 
-        // set up pointer to skip Msg_Type (1) and other
+        // set up pointer to skip Msg_Type (1)
         scratchptr = read_buffer;
         *scratchptr++;
+        current_msg_len -= 1;
 
         // check write buffer size -- Do we need a bigger buffer?
-        // if ((current_out_len) > _msize(write_buffer))
-        //{
-        //    write_buffer = (char *)realloc(write_buffer, current_out_len);
-        //    if (read_buffer == NULL)
-        //        return (MKMSG_MEM_ERROR);
-        //}
-        // fwrite()
+        if ((current_msg_len + 10) > _msize(write_buffer))
+        {
+            write_buffer = (char *)realloc(write_buffer, (current_msg_len + 10));
+            if (read_buffer == NULL)
+                return (MKMSG_MEM_ERROR);
+        }
 
-        // plan ahead Comp_ID (3) + Msg_Num (4) + Msg_Type (1) + ": " (2) = 10
-        sprintf(msginfo, "%s%04d%c: ", messageinfo->identifier, msgcount, read_buffer[0]);
+        // write the message header file to the write buffer
+        // Comp_ID (3) + Msg_Num (4) + Msg_Type (1) + ": " (2) = 10
+        sprintf(write_buffer, "%s%04d%c: ", messageinfo->identifier, msgcount, read_buffer[0]);
 
-        fwrite(msginfo, sizeof(msginfo), 1, fpo);
-        // fwrite(scratchptr, current_msg_len, 1, fpo);
+        // add the message to the write buffer
+        strncat(write_buffer, scratchptr, current_msg_len);
 
-        printf("X: %d\n", sizeof(msginfo));
-        printf("%s%s", msginfo, scratchptr);
+        // write the record to the output file
+        fwrite(write_buffer, (current_msg_len + 10), 1, fpo);
+
+        // print to screen if you really want it
+        if (messageinfo->verbose == 2)
+            printf("%s", write_buffer);
     }
-
-    printf("\n");
 
     // close up and get out
     fclose(fpo);
