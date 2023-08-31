@@ -50,15 +50,17 @@
 
 #include <io.h>
 
+#define DEBUG 1
+
 int readheader(MESSAGEINFO *messageinfo);
 int readmessages(MESSAGEINFO *messageinfo);
 void displayinfo(MESSAGEINFO *messageinfo);
 
 /*************************************************************************
- * Main( )                                                
- *     
- * Entry into the program                                                             
- * 
+ * Main( )
+ *
+ * Entry into the program
+ *
  **********************************/
 
 int main(int argc, char *argv[])
@@ -79,7 +81,7 @@ int main(int argc, char *argv[])
     strncpy(messageinfo.infile, argv[1], strlen(argv[1]));
     strncpy(messageinfo.outfile, outputfile, strlen(outputfile));
 
-    messageinfo.verbose = 2;
+    messageinfo.verbose = 1;
 
     rc = readheader(&messageinfo);
     if (rc != 0)
@@ -295,6 +297,7 @@ int readmessages(MESSAGEINFO *messageinfo)
 
     unsigned long msglenbuffer = 80;   // track size of message read buffer
     unsigned long current_msg_len = 0; // current msg length
+    unsigned long writelenbuffer = 80; // track size of message write buffer
 
     // open input file
     FILE *fpi = fopen(messageinfo->infile, "rb");
@@ -317,8 +320,8 @@ int readmessages(MESSAGEINFO *messageinfo)
     if (read_buffer == NULL)
         return (MKMSG_MEM_ERROR);
 
-    // write buffer early to msglenbuffer bytes - realloc later
-    char *write_buffer = (char *)calloc(msglenbuffer, sizeof(char));
+    // write buffer early to writelenbuffer bytes - realloc later
+    char *write_buffer = (char *)calloc(writelenbuffer, sizeof(char));
     if (write_buffer == NULL)
         return (MKMSG_MEM_ERROR);
 
@@ -368,16 +371,33 @@ int readmessages(MESSAGEINFO *messageinfo)
         // seek to the start of message to read
         fseek(fpi, msg_curr, SEEK_SET);
 
+#ifdef DEBUG
+        printf("********** Read Mem Check **********\n");
+        printf("read  msg len:   %d   buff size: %d\n",
+               current_msg_len, _msize(read_buffer));
+#endif
+
+        // Read buffer sizing
+        //
         // check read buffer size -- Do we need a bigger buffer?
         // Note: the +5 size is to give me room for %0 or <CR>
         // and I am paranoid :)
-        if ((current_msg_len + 5) > msglenbuffer)
+        // I did not need to do this, but just for fun I contract
+        // the buffer
+        if (((current_msg_len + 5) > _msize(read_buffer)) ||
+            (msglenbuffer > (current_msg_len * 4)))
         {
+#ifdef DEBUG
+            printf("Read buffer mem change\n");
+#endif
             msglenbuffer = current_msg_len + 5; // new buffer size
             read_buffer = (char *)realloc(read_buffer, msglenbuffer);
             if (read_buffer == NULL)
                 return (MKMSG_MEM_ERROR);
         }
+#ifdef DEBUG
+        printf("New read buffer: %d\n", _msize(read_buffer));
+#endif
 
         // clear the read_buffer -- set all to 0x00
         memset(read_buffer, 0x00, _msize(read_buffer));
@@ -409,18 +429,27 @@ int readmessages(MESSAGEINFO *messageinfo)
         *scratchptr++;
         current_msg_len -= 1;
 
-printf("read  buff: %d   size: %d\n", current_msg_len, _msize(read_buffer));
-printf("write buff: %d   size: %d  scr: %d\n", (current_msg_len + 10), _msize(write_buffer), _msize(scratchptr));
-
+#ifdef DEBUG
+        printf("********** Read Mem Check **********\n");
+        printf("write write len: %d   buff size: %d\n",
+               (current_msg_len + 10), _msize(read_buffer));
+#endif
         // check write buffer size -- Do we need a bigger buffer?
-        if ((current_msg_len + 10) > _msize(write_buffer))
+        if ((current_msg_len + 15) > _msize(write_buffer) ||
+            (_msize(write_buffer) > (current_msg_len * 4)))
         {
-            printf("bump\n");
-            write_buffer = (char *)realloc(write_buffer, (current_msg_len + 10));
-            if (read_buffer == NULL)
+#ifdef DEBUG
+            printf("Write buffer mem change\n");
+#endif
+            writelenbuffer = current_msg_len + 15; // new buffer size
+            write_buffer = (char *)realloc(write_buffer, writelenbuffer);
+            if (write_buffer == NULL)
                 return (MKMSG_MEM_ERROR);
         }
-printf("WTF1\n");
+#ifdef DEBUG
+        printf("New write buffer: %d\n", _msize(write_buffer));
+#endif
+
         // clear the read_buffer -- set all to 0x00
         memset(write_buffer, 0x00, _msize(write_buffer));
 
