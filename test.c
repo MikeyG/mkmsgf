@@ -1,3 +1,37 @@
+/****************************************************************************
+ *
+ *  mkmsgf.c -- Make Message File Utility (MKMSGF) Clone
+ *
+ *  ========================================================================
+ *
+ *    Version 1.0       Michael K Greene <mike@mgreene.org>
+ *                      July 2008
+ *
+ *  ========================================================================
+ *
+ *  Description: Simple clone of the mkmsgf tool.
+ *
+ *  Based on previous work:
+ *      (C) 2002-2008 by Yuri Prokushev
+ *      (C) 2001 Veit Kannegieser
+ *
+ *  ========================================================================
+ *
+ *   This program is free software; you can redistribute it and/or modify
+ *   it under the terms of the GNU General Public License as published by
+ *   the Free Software Foundation; either version 2 of the License, or
+ *   (at your option) any later version.
+ *
+ *   This program is distributed in the hope that it will be useful,
+ *   but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *   GNU General Public License for more details.
+ *
+ *   You should have received a copy of the GNU General Public License
+ *   along with this program; if not, write to the Free Software
+ *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ *
+ ***************************************************************************/
 
 #define INCL_DOSNLS /* National Language Support values */
 
@@ -18,25 +52,14 @@
 
 int readheader(MESSAGEINFO *messageinfo);
 int readmessages(MESSAGEINFO *messageinfo);
+void displayinfo(MESSAGEINFO *messageinfo);
 
 /*************************************************************************
- * Function:  SysWildCard                                                 *
- *                                                                        *
- * Transforms a filename string using the specified wildcard pattern.     *
- *                                                                        *
- * Syntax:    call SysWildCard source, wildcard                           *
- *                                                                        *
- * Params:    source - Filename string to be transformed.                 *
- *            wildcard - Wildcard pattern used to transform the           *
- *                       source string.                                   *
- *                                                                        *
- * Return:    returns the transformed string. If an error occurs,         *
- *            a null string ('') is returned.                             *
- *************************************************************************/
-/* main( )
- *
- * Entry into the program
- */
+ * Main( )                                                
+ *     
+ * Entry into the program                                                             
+ * 
+ **********************************/
 
 int main(int argc, char *argv[])
 {
@@ -56,61 +79,27 @@ int main(int argc, char *argv[])
     strncpy(messageinfo.infile, argv[1], strlen(argv[1]));
     strncpy(messageinfo.outfile, outputfile, strlen(outputfile));
 
-    messageinfo.verbose = 1;
+    messageinfo.verbose = 2;
 
-    if (readheader(&messageinfo) != 0)
+    rc = readheader(&messageinfo);
+    if (rc != 0)
     {
         printf("RC: %d\n\n", rc);
         exit(rc);
     }
 
-    printf("\n*********** Header Info ***********\n\n");
-
-    printf("Input filename         %s\n", messageinfo.infile);
-    printf("Component Identifier:  %s\n", messageinfo.identifier);
-    printf("Number of messages:    %d\n", messageinfo.numbermsg);
-    printf("First message number:  %d\n", messageinfo.firstmsg);
-    printf("OffsetID:              %d  (Offset %s)\n", messageinfo.offsetid,
-           (messageinfo.offsetid ? "uint16_t" : "uint32_t"));
-    printf("MSG File Version:      %d\n", messageinfo.version);
-    printf("Header offset:         0x%02X (%d)\n",
-           messageinfo.hdroffset, messageinfo.hdroffset);
-    printf("Country Info:          0x%02X (%d)\n",
-           messageinfo.countryinfo, messageinfo.countryinfo);
-    printf("Extended Header:       0x%02X (%lu)\n",
-           messageinfo.extenblock, messageinfo.extenblock);
-    printf("Reserved area:         ");
-    for (int x = 0; x < 5; x++)
-        printf("%02X ", messageinfo.reserved[x]);
-    printf("\n");
-    printf("\n*********** Country Info  ***********\n\n");
-    printf("Bytes per character:       %d\n", messageinfo.bytesperchar);
-    printf("Country Code:              %d\n", messageinfo.country);
-    printf("Language family ID:        %d\n", messageinfo.langfamilyID);
-    printf("Language version ID:       %d\n", messageinfo.langversionID);
-    printf("Number of codepages:       %d\n", messageinfo.codepagesnumber);
-    for (int x = 0; x < messageinfo.codepagesnumber; x++)
-        printf("0x%02X (%d)  ", messageinfo.codepages[x], messageinfo.codepages[x]);
-    printf("\n");
-    printf("File name:                 %s\n\n", messageinfo.filename);
-    if (messageinfo.extenblock)
-    {
-        printf("** Has an extended header **\n");
-        printf("Ext header length:        %d\n", messageinfo.extlength);
-        printf("Number ext blocks:        %d\n\n", messageinfo.extnumblocks);
-    }
-    else
-        printf("** No an extended header **\n\n");
+    displayinfo(&messageinfo);
 
     // decompile the messages
-    if (readmessages(&messageinfo) != 0)
+    rc = readmessages(&messageinfo);
+    if (rc != 0)
     {
         printf("RC: %d\n\n", rc);
         exit(rc);
     }
 
     printf("\nEnd Decompile (%d)\n", rc);
-    
+
     return (rc);
 }
 
@@ -167,7 +156,7 @@ int readheader(MESSAGEINFO *messageinfo)
     // Pulls all header information into MESSAGEINFO
     for (int x = 0; x < 3; x++)
         messageinfo->identifier[x] = msgheader->identifier[x];
-    messageinfo->identifier[3] = 0x00;
+    // messageinfo->identifier[3] = 0x00;
 
     messageinfo->numbermsg = msgheader->numbermsg;
     messageinfo->firstmsg = msgheader->firstmsg;
@@ -391,7 +380,7 @@ int readmessages(MESSAGEINFO *messageinfo)
         }
 
         // clear the read_buffer -- set all to 0x00
-        memset(read_buffer, 0x00, msglenbuffer);
+        memset(read_buffer, 0x00, _msize(read_buffer));
 
         // read in the message
         fread(read_buffer, sizeof(char), current_msg_len, fpi);
@@ -420,17 +409,33 @@ int readmessages(MESSAGEINFO *messageinfo)
         *scratchptr++;
         current_msg_len -= 1;
 
+printf("read  buff: %d   size: %d\n", current_msg_len, _msize(read_buffer));
+printf("write buff: %d   size: %d  scr: %d\n", (current_msg_len + 10), _msize(write_buffer), _msize(scratchptr));
+
         // check write buffer size -- Do we need a bigger buffer?
         if ((current_msg_len + 10) > _msize(write_buffer))
         {
+            printf("bump\n");
             write_buffer = (char *)realloc(write_buffer, (current_msg_len + 10));
             if (read_buffer == NULL)
                 return (MKMSG_MEM_ERROR);
         }
+printf("WTF1\n");
+        // clear the read_buffer -- set all to 0x00
+        memset(write_buffer, 0x00, _msize(write_buffer));
 
+        /// printf("%s", messageinfo->identifier);
         // write the message header file to the write buffer
         // Comp_ID (3) + Msg_Num (4) + Msg_Type (1) + ": " (2) = 10
-        sprintf(write_buffer, "%s%04d%c: ", messageinfo->identifier, msgcount, read_buffer[0]);
+        sprintf(msginfo, "%c%c%c%04d%c: ",
+                messageinfo->identifier[0],
+                messageinfo->identifier[1],
+                messageinfo->identifier[2],
+                msgcount,
+                read_buffer[0]);
+
+        // add the msginfo to the write buffer
+        strncpy(write_buffer, msginfo, 10);
 
         // add the message to the write buffer
         strncat(write_buffer, scratchptr, current_msg_len);
@@ -451,4 +456,48 @@ int readmessages(MESSAGEINFO *messageinfo)
     free(index_buffer);
 
     return (0);
+}
+
+void displayinfo(MESSAGEINFO *messageinfo)
+{
+    printf("\n*********** Header Info ***********\n\n");
+
+    printf("Input filename         %s\n", messageinfo->infile);
+    printf("Component Identifier:  %c%c%c\n", messageinfo->identifier[0],
+           messageinfo->identifier[1], messageinfo->identifier[2]);
+    printf("Number of messages:    %d\n", messageinfo->numbermsg);
+    printf("First message number:  %d\n", messageinfo->firstmsg);
+    printf("OffsetID:              %d  (Offset %s)\n", messageinfo->offsetid,
+           (messageinfo->offsetid ? "uint16_t" : "uint32_t"));
+    printf("MSG File Version:      %d\n", messageinfo->version);
+    printf("Header offset:         0x%02X (%d)\n",
+           messageinfo->hdroffset, messageinfo->hdroffset);
+    printf("Country Info:          0x%02X (%d)\n",
+           messageinfo->countryinfo, messageinfo->countryinfo);
+    printf("Extended Header:       0x%02X (%lu)\n",
+           messageinfo->extenblock, messageinfo->extenblock);
+    printf("Reserved area:         ");
+    for (int x = 0; x < 5; x++)
+        printf("%02X ", messageinfo->reserved[x]);
+    printf("\n");
+    printf("\n*********** Country Info  ***********\n\n");
+    printf("Bytes per character:       %d\n", messageinfo->bytesperchar);
+    printf("Country Code:              %d\n", messageinfo->country);
+    printf("Language family ID:        %d\n", messageinfo->langfamilyID);
+    printf("Language version ID:       %d\n", messageinfo->langversionID);
+    printf("Number of codepages:       %d\n", messageinfo->codepagesnumber);
+    for (int x = 0; x < messageinfo->codepagesnumber; x++)
+        printf("0x%02X (%d)  ", messageinfo->codepages[x], messageinfo->codepages[x]);
+    printf("\n");
+    printf("File name:                 %s\n\n", messageinfo->filename);
+    if (messageinfo->extenblock)
+    {
+        printf("** Has an extended header **\n");
+        printf("Ext header length:        %d\n", messageinfo->extlength);
+        printf("Number ext blocks:        %d\n\n", messageinfo->extnumblocks);
+    }
+    else
+        printf("** No an extended header **\n\n");
+
+    return;
 }
