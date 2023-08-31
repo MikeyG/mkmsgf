@@ -1,15 +1,15 @@
 /****************************************************************************
  *
- *  mkmsgf.c -- Make Message File Utility (MKMSGF) Clone
+ *  mkmsgd.c -- Make Message File Decompile (MKMSGD)
  *
  *  ========================================================================
  *
- *    Version 1.0       Michael K Greene <mike@mgreene.org>
- *                      July 2008
+ *    Version 1.0       Michael K Greene <mikeos2@mail.com>
+ *                      September 2023
  *
  *  ========================================================================
  *
- *  Description: Simple clone of the mkmsgf tool.
+ *  Description: Simple msg decompiler tool for OS/2 - ArcaOS files.
  *
  *  Based on previous work:
  *      (C) 2002-2008 by Yuri Prokushev
@@ -43,6 +43,7 @@
 #include <io.h>
 #include <sys\stat.h>
 #include <unistd.h>
+
 #include <malloc.h>
 #include "mkmsgf.h"
 #include "mkmsgerr.h"
@@ -50,11 +51,17 @@
 
 #include <io.h>
 
-#define DEBUG 1
+// #define DEBUG 1
 
 int readheader(MESSAGEINFO *messageinfo);
 int readmessages(MESSAGEINFO *messageinfo);
 void displayinfo(MESSAGEINFO *messageinfo);
+
+// ouput display functions
+// void usagelong(void);
+void prgheading(void);
+void helpshort(void);
+void helplong(void);
 
 /*************************************************************************
  * Main( )
@@ -67,24 +74,62 @@ int main(int argc, char *argv[])
 {
 
     int rc;
+    int ch = 0;
 
     char *outputfile = "out.txt";
 
     MESSAGEINFO messageinfo;
 
-    if (argc < 2 || argc > 2)
+    messageinfo.verbose = 0;
+
+    // no args - print usage and exit
+    if (argc == 1)
     {
-        printf("no args\n");
-        return 1;
+        prgheading(); // display program heading
+        helpshort();
+        exit(0);
     }
+
+    // Get program arguments using getopt()
+    while ((ch = getopt(argc, argv, "vVh")) != -1)
+    {
+
+        switch (ch)
+        {
+
+        case 'v':
+            messageinfo.verbose += 1;
+            break;
+
+        case 'V':
+            messageinfo.verbose += 2;
+            break;
+
+        case 'h':
+            prgheading();
+            // usagelong();
+            exit(0);
+            break;
+
+        default:
+            // ProgError(1, "MKMSGD: Syntax error unknown option");
+            break;
+        }
+    }
+
+    printf("%s", argv[optind]);
+
+    return 0;
 
     strncpy(messageinfo.infile, argv[1], strlen(argv[1]));
     strncpy(messageinfo.outfile, outputfile, strlen(outputfile));
 
-    messageinfo.verbose = 1;
+    // check the input msg file exists
+    if (access(messageinfo.infile, F_OK) != 0)
+        return (MKMSG_INPUT_ERROR);
 
-    rc = readheader(&messageinfo);
-    if (rc != 0)
+    // decompile header
+    if (readheader(&messageinfo) != 0)
     {
         printf("RC: %d\n\n", rc);
         exit(rc);
@@ -93,16 +138,15 @@ int main(int argc, char *argv[])
     displayinfo(&messageinfo);
 
     // decompile the messages
-    rc = readmessages(&messageinfo);
-    if (rc != 0)
+    if (readmessages(&messageinfo) != 0)
     {
         printf("RC: %d\n\n", rc);
         exit(rc);
     }
 
-    printf("\nEnd Decompile (%d)\n", rc);
+    printf("\nEnd Decompile\n");
 
-    return (rc);
+    return (0);
 }
 
 /*************************************************************************
@@ -125,12 +169,6 @@ int readheader(MESSAGEINFO *messageinfo)
     MSGHEADER1 *msgheader = NULL;
     FILECOUNTRYINFO1 *cpheader = NULL;
     EXTHDR *extheader = NULL;
-
-    // check the input msg file exists
-    if (access(messageinfo->infile, F_OK) != 0)
-        return (MKMSG_INPUT_ERROR);
-
-    // strcpy(messageinfo->infile, filename);
 
     // open input file
     FILE *fp = fopen(messageinfo->infile, "rb");
@@ -371,27 +409,28 @@ int readmessages(MESSAGEINFO *messageinfo)
         // seek to the start of message to read
         fseek(fpi, msg_curr, SEEK_SET);
 
-#ifdef DEBUG
-        printf("********** Read Mem Check **********\n");
-        printf("read  msg len:   %d   buff size: %d\n",
-               current_msg_len, _msize(read_buffer));
-#endif
-
-        // Read buffer sizing
+        // Read buffer sizing **********************************
         //
         // check read buffer size -- Do we need a bigger buffer?
         // Note: the +5 size is to give me room for %0 or <CR>
         // and I am paranoid :)
         // I did not need to do this, but just for fun I contract
         // the buffer
+
+#ifdef DEBUG
+        printf("**** Msg number: %d\n", msgcount);
+        printf("********** Read Mem Check **********\n");
+        printf("read  msg len:   %d   buff size: %d\n",
+               current_msg_len, _msize(read_buffer));
+#endif
         if (((current_msg_len + 5) > _msize(read_buffer)) ||
-            (msglenbuffer > (current_msg_len * 4)))
+            (_msize(read_buffer) > (current_msg_len * 4)))
         {
 #ifdef DEBUG
             printf("Read buffer mem change\n");
 #endif
-            msglenbuffer = current_msg_len + 5; // new buffer size
-            read_buffer = (char *)realloc(read_buffer, msglenbuffer);
+            // msglenbuffer = current_msg_len + 5; // new buffer size
+            read_buffer = (char *)realloc(read_buffer, (current_msg_len + 5));
             if (read_buffer == NULL)
                 return (MKMSG_MEM_ERROR);
         }
@@ -429,10 +468,18 @@ int readmessages(MESSAGEINFO *messageinfo)
         *scratchptr++;
         current_msg_len -= 1;
 
+        // Write buffer sizing **********************************
+        //
+        // check write buffer size -- Do we need a bigger buffer?
+        // Note: the +5 size is to give me room for %0 or <CR>
+        // and I am paranoid :)
+        // I did not need to do this, but just for fun I contract
+        // the buffer
+
 #ifdef DEBUG
-        printf("********** Read Mem Check **********\n");
-        printf("write write len: %d   buff size: %d\n",
-               (current_msg_len + 10), _msize(read_buffer));
+        printf("********** Write Mem Check **********\n");
+        printf("write msg len: %d   buff size: %d\n",
+               current_msg_len, _msize(read_buffer));
 #endif
         // check write buffer size -- Do we need a bigger buffer?
         if ((current_msg_len + 15) > _msize(write_buffer) ||
@@ -441,8 +488,8 @@ int readmessages(MESSAGEINFO *messageinfo)
 #ifdef DEBUG
             printf("Write buffer mem change\n");
 #endif
-            writelenbuffer = current_msg_len + 15; // new buffer size
-            write_buffer = (char *)realloc(write_buffer, writelenbuffer);
+            // writelenbuffer = current_msg_len + 15; // new buffer size
+            write_buffer = (char *)realloc(write_buffer, (current_msg_len + 15));
             if (write_buffer == NULL)
                 return (MKMSG_MEM_ERROR);
         }
@@ -475,6 +522,8 @@ int readmessages(MESSAGEINFO *messageinfo)
         // print to screen if you really want it
         if (messageinfo->verbose == 2)
             printf("%s", write_buffer);
+
+        printf("XX");
     }
 
     // close up and get out
@@ -527,6 +576,26 @@ void displayinfo(MESSAGEINFO *messageinfo)
     }
     else
         printf("** No an extended header **\n\n");
+
+    return;
+}
+
+void prgheading(void)
+{
+    printf("\nOperating System/2 Make Message File Decompiler (MKMSGD)\n");
+    printf("Version %s  Michael Greene <mikeos2@gmail.com>\n", SYSLVERSION);
+    printf("Compiled with Open Watcom %d.%d  %s\n", OWMAJOR, OWMINOR, __DATE__);
+}
+
+void helpshort(void)
+{
+    printf("\nMKMSGD [-v] infile.msg [outfile.[txt | codepage] ]\n\n");
+}
+
+void helplong(void)
+{
+    printf("\nUse MKMSGD as follows:\n");
+    printf("        [-v] infile.msg [outfile.[txt | codepage] ]\n");
 
     return;
 }
