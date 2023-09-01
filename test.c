@@ -341,6 +341,8 @@ int readmessages(MESSAGEINFO *messageinfo)
     uint16_t *small_index = NULL;
     uint32_t *large_index = NULL;
 
+    char temp[] = {"xx"};
+
     char msginfo[10] = {0};  // message header
     char msg_type;           // message type
     char *scratchptr = NULL; // scratch pointer
@@ -447,7 +449,7 @@ int readmessages(MESSAGEINFO *messageinfo)
             printf("Read buffer mem change\n");
 #endif
             // msglenbuffer = current_msg_len + 5; // new buffer size
-            read_buffer = (char *)realloc(read_buffer, (current_msg_len + 5));
+            read_buffer = (char *)realloc(read_buffer, (current_msg_len + 4));
             if (read_buffer == NULL)
                 return (MKMSG_MEM_ERROR);
         }
@@ -470,6 +472,7 @@ int readmessages(MESSAGEINFO *messageinfo)
         if (read_buffer[(current_msg_len - 1)] != 0x0A &&
             read_buffer[(current_msg_len - 2)] != 0x0D)
         {
+            printf("adding\n");
             read_buffer[(current_msg_len + 0)] = '%';
             read_buffer[(current_msg_len + 1)] = '0';
             read_buffer[(current_msg_len + 2)] = 0x0D;
@@ -500,12 +503,11 @@ int readmessages(MESSAGEINFO *messageinfo)
 #endif
         // check write buffer size -- Do we need a bigger buffer?
         if ((current_msg_len + 15) > _msize(write_buffer) ||
-            (_msize(write_buffer) > (current_msg_len * 4)))
+            (_msize(write_buffer) > (current_msg_len * 5)))
         {
 #ifdef DEBUG
             printf("Write buffer mem change\n");
 #endif
-            // writelenbuffer = current_msg_len + 15; // new buffer size
             write_buffer = (char *)realloc(write_buffer, (current_msg_len + 15));
             if (write_buffer == NULL)
                 return (MKMSG_MEM_ERROR);
@@ -517,7 +519,6 @@ int readmessages(MESSAGEINFO *messageinfo)
         // clear the read_buffer -- set all to 0x00
         memset(write_buffer, 0x00, _msize(write_buffer));
 
-        /// printf("%s", messageinfo->identifier);
         // write the message header file to the write buffer
         // Comp_ID (3) + Msg_Num (4) + Msg_Type (1) + ": " (2) = 10
         sprintf(msginfo, "%c%c%c%04d%c: ",
@@ -534,7 +535,11 @@ int readmessages(MESSAGEINFO *messageinfo)
         strncat(write_buffer, scratchptr, current_msg_len);
 
         // write the record to the output file
-        fwrite(write_buffer, (current_msg_len + 10), 1, fpo);
+        // just a note here: The write_buffer is larger than
+        // needed (see +15 above) and I memset to fill with 0x00
+        // given this, we will get the write size using strlen()
+        // which returns a size up to the 0x00
+        fwrite(write_buffer, strlen(write_buffer), 1, fpo);
 
         // print to screen if you really want it
         if (messageinfo->verbose == 2)
