@@ -123,24 +123,18 @@ int main(int argc, char *argv[])
         strncpy(messageinfo.infile, argv[optind], strlen(argv[optind]));
         if (access(messageinfo.infile, F_OK) != 0)
             exit(MKMSG_INPUT_ERROR);
-        /*/
-                _splitpath("z:\\arcaos\\mkmsgf\\test.exe",
-                           // messageinfo.indrive,
-                           // messageinfo.indir,
-                           NULL,NULL,
-                           messageinfo.infname,
-                           messageinfo.inext);
-        */
-        printf("%d   %s\n", optind, messageinfo.infile);
 
-        printf("%d\n", optind);
-        
+        _splitpath(messageinfo.infile, messageinfo.indrive,
+                   messageinfo.indir, messageinfo.infname, messageinfo.inext);
+
         optind++;
 
-        // if 2 then have an output
-        // if (optind == 2)
-        //     strncpy(messageinfo.outfile, outputfile, strlen(outputfile));
-        
+        if (optind != argc)
+            // provide output file
+            strncpy(messageinfo.outfile, argv[optind], strlen(argv[optind]));
+        else
+            // need to make an output file
+            sprintf(messageinfo.outfile, "%s%s", messageinfo.infname, ".txt");
     }
     else
     {
@@ -149,12 +143,7 @@ int main(int argc, char *argv[])
         exit(0);
     }
 
-    exit(0);
-
-    // strncpy(messageinfo.infile, argv[1], strlen(argv[1]));
-    // strncpy(messageinfo.outfile, outputfile, strlen(outputfile));
-
-    // check the input msg file exists
+    printf("%s   %s\n", messageinfo.infile, messageinfo.outfile);
 
     // decompile header
     if (readheader(&messageinfo) != 0)
@@ -550,8 +539,6 @@ int readmessages(MESSAGEINFO *messageinfo)
         // print to screen if you really want it
         if (messageinfo->verbose == 2)
             printf("%s", write_buffer);
-
-        printf("XX");
     }
 
     // close up and get out
