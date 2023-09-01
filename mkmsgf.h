@@ -134,9 +134,15 @@ typedef struct _MSGINFOL
 typedef struct _MESSAGEINFO
 {
     // mkmsgd options
-    char infile[_MAX_FNAME];      // input filename
-    char outfile[_MAX_FNAME];     // output filename
-    uint8_t verbose;              // how much to see?
+    char infile[_MAX_PATH]; // input filename
+    char indrive[_MAX_DRIVE];
+    char indir[_MAX_DIR];
+    char infname[_MAX_FNAME];
+    char inext[_MAX_EXT];
+
+    char outfile[_MAX_PATH]; // output filename
+
+    uint8_t verbose; // how much to see?
     // compile/decompile info
     uint8_t identifier[3];        // Identifier (SYS, DOS, NET, etc.)
     uint16_t numbermsg;           // Number of messages
