@@ -174,9 +174,19 @@ int main(int argc, char *argv[])
 }
 
 /*************************************************************************
- * Function:  readheader                                                 
- *                                                                        
+ * Function:  readheader( )   
  * 
+ * Reads in all the MSG file info and stores in MESSAGEINFO structure                                              
+ *                                                                        
+ * 1. Read in the MSG file header
+ * 2. Check for valid signature
+ * 3. Transfer header info into MESSAGEINFO structure
+ * 4. Read in FILECOUNTRYINFO block into MESSAGEINFO structure
+ * 5. Check for extention block and read if exists
+ * 6. Calculate message start
+ * 7. Calculate index offset and size
+ * 
+ * Return:    returns error code or 0 for all good
  *************************************************************************/
 
 int readheader(MESSAGEINFO *messageinfo)
@@ -211,7 +221,6 @@ int readheader(MESSAGEINFO *messageinfo)
     // Pulls all header information into MESSAGEINFO
     for (int x = 0; x < 3; x++)
         messageinfo->identifier[x] = msgheader->identifier[x];
-    // messageinfo->identifier[3] = 0x00;
 
     messageinfo->numbermsg = msgheader->numbermsg;
     messageinfo->firstmsg = msgheader->firstmsg;
@@ -320,12 +329,9 @@ int readheader(MESSAGEINFO *messageinfo)
 
 /*************************************************************************
  * Function:  outputheader()
- *
+ * 
+ * Creates output file and writes out info header as comments
  * Params: loaded MESSAGEINFO structure as an input
- *
- * 1. Opens input and output message files
- * 2.
- * 3.
  *
  * Return:    returns error code or 0 for all good
  *
@@ -437,12 +443,29 @@ int outputheader(MESSAGEINFO *messageinfo)
 /*************************************************************************
  * Function:  readmessages()
  *
- * Params: loaded MESSAGEINFO structure as an input
- *
  * 1. Opens input and output message files
- * 2.
- * 3.
- *
+ * 2. Setup buffers for index, read, and write
+ * 3. Read in full index
+ * 4. Write out idenifier -- needs 0x0D 0x0A ending
+ * 5. Setup for uint8 or uint32 index read
+ * 6. Main loop
+ * 6.1 Calculate message number
+ * 6.2 If last message - get final pointer for read
+ * 6.3 Calculate message length from index
+ * 6.4 Seek to message start
+ * 6.5 Resize read buffer if needed
+ * 6.6 Clear read buffer with all 0x00
+ * 6.7 Read in the current message
+ * 6.8 Verify msg length (current_msg_len) using strlen
+ * 6.9 Check for no 0x0D 0x0A end - if not add %, 0, 0x0D, 0x0A
+ * 6.10 Setup scratch pointer and move past msg_type
+ * 6.11 Resize write buffer if needed
+ * 6.12 Generate message header and write
+ * 6.13 Write message
+ * 6.14 If V option print to screen
+ * 7 Close files and free buffers
+ * 8 Return
+ * 
  * Return:    returns error code or 0 for all good
  *
  *************************************************************************/
@@ -581,15 +604,6 @@ int readmessages(MESSAGEINFO *messageinfo)
         // without a <CR>. So we need to check each input line for
         // 0x0D 0x0A and if does not exist then add %0 and 0x0A
 
-        // check for 0x0A and 0x0D at end of message
-        /*if (read_buffer[(current_msg_len - 1)] == 0x0A &&
-            read_buffer[(current_msg_len - 2)] == 0x0D)
-        {
-            read_buffer[(current_msg_len - 1)] = 0x00;
-            read_buffer[(current_msg_len - 2)] = 0x0A;
-            current_msg_len -= 1;
-        }*/
-
         if (read_buffer[(current_msg_len - 1)] != 0x0A &&
             read_buffer[(current_msg_len - 2)] != 0x0D)
         {
@@ -661,6 +675,13 @@ int readmessages(MESSAGEINFO *messageinfo)
 
     return (0);
 }
+
+/*************************************************************************
+ * Function:  displayinfo()
+ * 
+ * Display MESSAGEINFO data to screen
+ *
+ *************************************************************************/
 
 void displayinfo(MESSAGEINFO *messageinfo)
 {
