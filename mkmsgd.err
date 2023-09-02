@@ -1,0 +1,2 @@
+mkmsgd.c(74): Warning! W200: 'rc' has been referenced but never assigned a value
+mkmsgd.c(604): Warning! W302: Expression is only useful for its side effects

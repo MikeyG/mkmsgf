@@ -71,11 +71,8 @@ void helplong(void);
 
 int main(int argc, char *argv[])
 {
-
     int rc;
     int ch = 0;
-
-    char *outputfile = "out.txt";
 
     MESSAGEINFO messageinfo;
 
@@ -355,7 +352,7 @@ int outputheader(MESSAGEINFO *messageinfo)
     sprintf(write_buffer, "%s\n;\n",
             "; ********** MKMSGD Message file decompiler **********");
     fwrite(write_buffer, strlen(write_buffer), 1, fpo);
-/*
+
     sprintf(write_buffer, "; Input filename           %s\n",
             messageinfo->infile);
     fwrite(write_buffer, strlen(write_buffer), 1, fpo);
@@ -434,7 +431,7 @@ int outputheader(MESSAGEINFO *messageinfo)
                 ";\n; ** No an extended header **");
         fwrite(write_buffer, strlen(write_buffer), 1, fpo);
     }
-*/
+
     // end of info next write identifer
     sprintf(write_buffer, "%c%c%c\n",
             messageinfo->identifier[0],

@@ -24,7 +24,7 @@ CFLAGS  = -i=$(INCLUDE) -za99 -d0 -wx -zq $(OPT) $(MACHINE) -bm -bt=OS2
 LDFLAGS =
 !endif
 
-all: mkmsgf.exe
+all: mkmsgf.exe mkmsgd.exe
 
 mkmsgf.exe:
   $(CC) $(CFLAGS) mkmsgf.c
@@ -37,7 +37,7 @@ mkmsgd.exe:
   $(CC) $(CFLAGS) mkmsgd.c
   $(LD) NAME mkmsgd SYS os2v2 $(LDFLAGS) FILE mkmsgd.obj
 !ifndef DEBUG
-  -@lxlite mkmsgf.exe
+  -@lxlite mkmsgd.exe
 !endif
 
 debug:  .SYMBOLIC
