@@ -12,8 +12,7 @@
  *  Description: Simple msg decompiler tool for OS/2 - ArcaOS files.
  *
  *  Based on previous work:
- *      (C) 2002-2008 by Yuri Prokushev
- *      (C) 2001 Veit Kannegieser
+ *      (C) 2005 Veit Kannegieser (E_MSGF)
  *
  *  ========================================================================
  *
@@ -67,16 +66,18 @@ void helplong(void);
  *
  * Entry into the program
  *
+ * Expects a valid MSG file only. Will name the output file using the input
+ * file and the TXT extention if an output filename is not provided.
+ *
  **********************************/
 
 int main(int argc, char *argv[])
 {
-    int rc;
+    int rc = 0;
     int ch = 0;
 
-    MESSAGEINFO messageinfo;
-
-    messageinfo.verbose = 0;
+    MESSAGEINFO messageinfo; // holds all the info
+    messageinfo.verbose = 0; // start being quiet
 
     // no args - print usage and exit
     if (argc == 1)
@@ -139,49 +140,43 @@ int main(int argc, char *argv[])
         exit(0);
     }
 
-    printf("%s   %s\n", messageinfo.infile, messageinfo.outfile);
-
     // decompile header
-    if (readheader(&messageinfo) != 0)
+    rc = readheader(&messageinfo);
+    if (rc != 0)
     {
         printf("RC: %d\n\n", rc);
         exit(rc);
     }
 
+    // display info on screen
     displayinfo(&messageinfo);
 
     // write out header
-    if (outputheader(&messageinfo) != 0)
+    rc = outputheader(&messageinfo);
+    if (rc != 0)
     {
         printf("RC: %d\n\n", rc);
         exit(rc);
     }
 
     // decompile the messages and write
-    if (readmessages(&messageinfo) != 0)
+    rc = readmessages(&messageinfo);
+    if (rc != 0)
     {
         printf("RC: %d\n\n", rc);
         exit(rc);
     }
 
+    // if you don't see this then I screwed up
     printf("\nEnd Decompile\n");
 
     return (0);
 }
 
 /*************************************************************************
- * Function:  readheader                                                 *
- *                                                                        *
- * Transforms a filename string using the specified wildcard pattern.     *
- *                                                                        *
- * Syntax:    call SysWildCard source, wildcard                           *
- *                                                                        *
- * Params:    source - Filename string to be transformed.                 *
- *            wildcard - Wildcard pattern used to transform the           *
- *                       source string.                                   *
- *                                                                        *
- * Return:    returns the transformed string. If an error occurs,         *
- *            a null string ('') is returned.                             *
+ * Function:  readheader                                                 
+ *                                                                        
+ * 
  *************************************************************************/
 
 int readheader(MESSAGEINFO *messageinfo)
@@ -432,13 +427,6 @@ int outputheader(MESSAGEINFO *messageinfo)
         fwrite(write_buffer, strlen(write_buffer), 1, fpo);
     }
 
-    // end of info next write identifer
-    sprintf(write_buffer, "%c%c%c\n",
-            messageinfo->identifier[0],
-            messageinfo->identifier[1],
-            messageinfo->identifier[2]);
-    fwrite(write_buffer, strlen(write_buffer), 1, fpo);
-
     // close up and get out
     fclose(fpo);
     free(write_buffer);
@@ -507,6 +495,19 @@ int readmessages(MESSAGEINFO *messageinfo)
     fread(index_buffer, sizeof(char), messageinfo->indexsize, fpi);
     if (ferror(fpi))
         return (MKMSG_READ_ERROR);
+
+    // end of info next write identifer
+
+    // not pretty, but the old IBM MKMSGF expects this
+    // line to end with 0x0D 0x0A
+    write_buffer[0] = messageinfo->identifier[0];
+    write_buffer[1] = messageinfo->identifier[1];
+    write_buffer[2] = messageinfo->identifier[2];
+    write_buffer[3] = 0x0D;
+    write_buffer[4] = 0x0A;
+    write_buffer[5] = 0x00;
+
+    fwrite(write_buffer, strlen(write_buffer), 1, fpo);
 
     // pick the pointer based on index uint16 or uint32
     if (messageinfo->offsetid)

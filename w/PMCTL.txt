@@ -1,0 +1,32 @@
+; ********** MKMSGD Message file decompiler **********
+;
+; Input filename           c:\os2\SYSTEM\PMCTL.MSG
+; MSG File Version:        2
+; Component Identifier:    PMC
+; Number of messages:      8
+; First message number:    1
+;
+; ******************* Country Info *******************
+;
+; Bytes per character:       1
+; Country Code:              0
+; Language family ID:        0
+; Language version ID:       0
+; Number of codepages:       1
+; Codepage 1        0x352 (850)
+;
+; File name:                 pmctl.msg
+;
+; ** No an extended header **
+;
+PMC
+PMC0001I:  During PMCTLS Initialization, %1 Failed.   HMOD or HMTX Data: %2   Check probe value.
+PMC0002I:  During PMWCTLS Initialization, %1 Failed.   HMOD or HMTX Data: %2   Check probe value. 
+PMC0003I:  %1 was passed NULL instance data.  Window Handle ID: %2  (DEC) %3
+PMC0004I:  Error in PMCTLS 
+PMC0005I:  Error in PMWCTLS 
+PMC0006I:  Not in Use
+PMC0007I:  Not in Use
+PMC0008I:  Only WM_CREATE should have NULL Instance Data. 
+
+%0
