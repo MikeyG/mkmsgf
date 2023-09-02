@@ -1,3 +1,29 @@
+; ********** MKMSGD Message file decompiler **********
+;
+; Input filename           OSO001.MSG
+; MSG File Version:        2
+; Component Identifier:    SYS
+; Number of messages:      3507
+; First message number:    0
+;
+; ******************* Country Info *******************
+;
+; Bytes per character:       1
+; Country Code:              0
+; Language family ID:        9
+; Language version ID:       1
+; Number of codepages:       2
+; Codepage 1        0x352 (850)
+; Codepage 2        0x1B5 (437)
+;
+; File name:                 oso001.msg
+;
+; ** Has an extended header **
+;
+; Ext header length:        302
+; Number ext blocks:        0
+;
+SYS
 SYS0000I: Y N A R I
 SYS0001I: Incorrect function
 SYS0002E: The system cannot find the file specified.
@@ -5389,4 +5415,3 @@ where:
  /F - Displays Module Version Information for each process on the system
  /A - Displays all the information of the above options.
 
-xx

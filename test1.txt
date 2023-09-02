@@ -1,3 +1,6 @@
+; ********** MKMSGD Message file decompiler **********
+;
+MAB
 MAB0100E: File not found
 MAB0101?: 
 MAB0102H: Usage: del [drive:][path] filename
@@ -12,4 +15,4 @@ MAB0110P: Prompt with no 0 at end
 MAB0111I: Info with 0 at end%0
 MAB0112W: Warn with 0 at end%0
 MAB0113E: Err with 0 at end%0
-MAB0114H: Hlp with 0 at end 
+MAB0114H: Hlp with 0 at end %0

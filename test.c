@@ -51,10 +51,9 @@
 
 #include <io.h>
 
-// #define DEBUG 1
-
 int readheader(MESSAGEINFO *messageinfo);
 int readmessages(MESSAGEINFO *messageinfo);
+int outputheader(MESSAGEINFO *messageinfo);
 void displayinfo(MESSAGEINFO *messageinfo);
 
 // ouput display functions
@@ -154,7 +153,14 @@ int main(int argc, char *argv[])
 
     displayinfo(&messageinfo);
 
-    // decompile the messages
+    // write out header
+    if (outputheader(&messageinfo) != 0)
+    {
+        printf("RC: %d\n\n", rc);
+        exit(rc);
+    }
+
+    // decompile the messages and write
     if (readmessages(&messageinfo) != 0)
     {
         printf("RC: %d\n\n", rc);
@@ -310,7 +316,7 @@ int readheader(MESSAGEINFO *messageinfo)
     {
         fseek(fp, 0L, SEEK_END);
         // don't panic - I need eof + 1
-        messageinfo->msgfinalindex = ftell(fp) + 1;
+        messageinfo->msgfinalindex = (unsigned long)ftell(fp) + 1;
     }
 
     // close up and get out
@@ -321,48 +327,160 @@ int readheader(MESSAGEINFO *messageinfo)
 }
 
 /*************************************************************************
- * Function:  readmessages                                                 *
- *                                                                        *
- * Transforms a filename string using the specified wildcard pattern.     *
- *                                                                        *
- * Syntax:    call SysWildCard source, wildcard                           *
- *                                                                        *
- * Params:    source - Filename string to be transformed.                 *
- *            wildcard - Wildcard pattern used to transform the           *
- *                       source string.                                   *
- *                                                                        *
- * Return:    returns the transformed string. If an error occurs,         *
- *            a null string ('') is returned.                             *
+ * Function:  outputheader()
+ *
+ * Params: loaded MESSAGEINFO structure as an input
+ *
+ * 1. Opens input and output message files
+ * 2.
+ * 3.
+ *
+ * Return:    returns error code or 0 for all good
+ *
+ *************************************************************************/
+
+int outputheader(MESSAGEINFO *messageinfo)
+{
+    // write output file open for append
+    FILE *fpo = fopen(messageinfo->outfile, "wb");
+    if (fpo == NULL)
+        return (MKMSG_OPEN_ERROR);
+
+    // buffer to write out message heaeder - I just pick
+    // 140 size just because
+    char *write_buffer = (char *)calloc(140, sizeof(char));
+    if (write_buffer == NULL)
+        return (MKMSG_MEM_ERROR);
+
+    sprintf(write_buffer, "%s\n;\n",
+            "; ********** MKMSGD Message file decompiler **********");
+    fwrite(write_buffer, strlen(write_buffer), 1, fpo);
+/*
+    sprintf(write_buffer, "; Input filename           %s\n",
+            messageinfo->infile);
+    fwrite(write_buffer, strlen(write_buffer), 1, fpo);
+
+    sprintf(write_buffer, "; MSG File Version:        %d\n",
+            messageinfo->version);
+    fwrite(write_buffer, strlen(write_buffer), 1, fpo);
+
+    sprintf(write_buffer, "; Component Identifier:    %c%c%c\n",
+            messageinfo->identifier[0],
+            messageinfo->identifier[1],
+            messageinfo->identifier[2]);
+    fwrite(write_buffer, strlen(write_buffer), 1, fpo);
+
+    sprintf(write_buffer, "; Number of messages:      %d\n",
+            messageinfo->numbermsg);
+    fwrite(write_buffer, strlen(write_buffer), 1, fpo);
+
+    sprintf(write_buffer, "; First message number:    %d\n;\n",
+            messageinfo->firstmsg);
+    fwrite(write_buffer, strlen(write_buffer), 1, fpo);
+
+    sprintf(write_buffer, "%s\n;\n",
+            "; ******************* Country Info *******************");
+    fwrite(write_buffer, strlen(write_buffer), 1, fpo);
+
+    sprintf(write_buffer, "; Bytes per character:       %d\n",
+            messageinfo->bytesperchar);
+    fwrite(write_buffer, strlen(write_buffer), 1, fpo);
+
+    sprintf(write_buffer, "; Country Code:              %d\n",
+            messageinfo->country);
+    fwrite(write_buffer, strlen(write_buffer), 1, fpo);
+
+    sprintf(write_buffer, "; Language family ID:        %d\n",
+            messageinfo->langfamilyID);
+    fwrite(write_buffer, strlen(write_buffer), 1, fpo);
+
+    sprintf(write_buffer, "; Language version ID:       %d\n",
+            messageinfo->langversionID);
+    fwrite(write_buffer, strlen(write_buffer), 1, fpo);
+
+    sprintf(write_buffer, "; Number of codepages:       %d\n",
+            messageinfo->codepagesnumber);
+    fwrite(write_buffer, strlen(write_buffer), 1, fpo);
+
+    memset(write_buffer, 0x00, _msize(write_buffer));
+    for (int x = 0; x < messageinfo->codepagesnumber; x++)
+    {
+        sprintf(write_buffer, "; Codepage %d        0x%02X (%d)\n",
+                (x + 1), messageinfo->codepages[x], messageinfo->codepages[x]);
+        fwrite(write_buffer, strlen(write_buffer), 1, fpo);
+    }
+
+    sprintf(write_buffer, ";\n; File name:                 %s\n",
+            messageinfo->filename);
+    fwrite(write_buffer, strlen(write_buffer), 1, fpo);
+
+    if (messageinfo->extenblock)
+    {
+        sprintf(write_buffer, "%s\n;\n",
+                ";\n; ** Has an extended header **");
+        fwrite(write_buffer, strlen(write_buffer), 1, fpo);
+
+        sprintf(write_buffer, "; Ext header length:        %d\n",
+                messageinfo->extlength);
+        fwrite(write_buffer, strlen(write_buffer), 1, fpo);
+
+        sprintf(write_buffer, "; Number ext blocks:        %d\n;\n",
+                messageinfo->extnumblocks);
+        fwrite(write_buffer, strlen(write_buffer), 1, fpo);
+    }
+    else
+    {
+        sprintf(write_buffer, "%s\n;\n",
+                ";\n; ** No an extended header **");
+        fwrite(write_buffer, strlen(write_buffer), 1, fpo);
+    }
+*/
+    // end of info next write identifer
+    sprintf(write_buffer, "%c%c%c\n",
+            messageinfo->identifier[0],
+            messageinfo->identifier[1],
+            messageinfo->identifier[2]);
+    fwrite(write_buffer, strlen(write_buffer), 1, fpo);
+
+    // close up and get out
+    fclose(fpo);
+    free(write_buffer);
+
+    return (0);
+}
+
+/*************************************************************************
+ * Function:  readmessages()
+ *
+ * Params: loaded MESSAGEINFO structure as an input
+ *
+ * 1. Opens input and output message files
+ * 2.
+ * 3.
+ *
+ * Return:    returns error code or 0 for all good
+ *
  *************************************************************************/
 
 int readmessages(MESSAGEINFO *messageinfo)
 {
     // index pointers
-    uint16_t *small_index = NULL;
-    uint32_t *large_index = NULL;
-
-    char temp[] = {"xx"};
-
-    char msginfo[10] = {0};  // message header
-    char msg_type;           // message type
-    char *scratchptr = NULL; // scratch pointer
-
-    // start of message area
-    unsigned long msg_curr = 0;
-    unsigned long msg_next = 0;
-    unsigned long msgcount = 0;
-
-    unsigned long msglenbuffer = 80;   // track size of message read buffer
+    uint16_t *small_index = NULL;      // used if index pointers uint16
+    uint32_t *large_index = NULL;      // used if index pointers uint16
+    char msginfo[10] = {0};            // current message header
+    char *scratchptr = NULL;           // scratch pointer
+    unsigned long msg_curr = 0;        // pointer to current index msg
+    unsigned long msg_next = 0;        // pointer to next index msg
+    unsigned long current_msg = 0;     // current msg number being processed
     unsigned long current_msg_len = 0; // current msg length
-    unsigned long writelenbuffer = 80; // track size of message write buffer
 
     // open input file
     FILE *fpi = fopen(messageinfo->infile, "rb");
     if (fpi == NULL)
         return (MKMSG_OPEN_ERROR);
 
-    // write output file
-    FILE *fpo = fopen(messageinfo->outfile, "wb");
+    // write output file open for append
+    FILE *fpo = fopen(messageinfo->outfile, "ab");
     if (fpo == NULL)
         return (MKMSG_OPEN_ERROR);
 
@@ -373,20 +491,23 @@ int readmessages(MESSAGEINFO *messageinfo)
 
     // buffer to read in a message - start with a 80 size buffer
     // if for some reason bigger is needed realloc latter
-    char *read_buffer = (char *)calloc(msglenbuffer, sizeof(char));
+    char *read_buffer = (char *)calloc(80, sizeof(char));
     if (read_buffer == NULL)
         return (MKMSG_MEM_ERROR);
 
-    // write buffer early to writelenbuffer bytes - realloc later
-    char *write_buffer = (char *)calloc(writelenbuffer, sizeof(char));
+    // buffer to write in a message - start with a 80 size buffer
+    // if for some reason bigger is needed realloc latter
+    char *write_buffer = (char *)calloc(80, sizeof(char));
     if (write_buffer == NULL)
         return (MKMSG_MEM_ERROR);
+
+    // *** get full index into buffer (index_buffer)
 
     // seek to the start of index for read
     fseek(fpi, messageinfo->indexoffset, SEEK_SET);
 
     // read index into buffer
-    int read = fread(index_buffer, sizeof(char), messageinfo->indexsize, fpi);
+    fread(index_buffer, sizeof(char), messageinfo->indexsize, fpi);
     if (ferror(fpi))
         return (MKMSG_READ_ERROR);
 
@@ -396,11 +517,11 @@ int readmessages(MESSAGEINFO *messageinfo)
     else
         large_index = (uint32_t *)index_buffer;
 
-    // main read - write loop
+    // **** main read - read/write loop
     for (int x = 0; x < messageinfo->numbermsg; x++)
     {
         // do the message number counting
-        msgcount = messageinfo->firstmsg + x;
+        current_msg = messageinfo->firstmsg + x;
 
         // handle the uint16 and uint32 index differences
         if (messageinfo->offsetid)
@@ -435,44 +556,45 @@ int readmessages(MESSAGEINFO *messageinfo)
         // and I am paranoid :)
         // I did not need to do this, but just for fun I contract
         // the buffer
-
-#ifdef DEBUG
-        printf("**** Msg number: %d\n", msgcount);
-        printf("********** Read Mem Check **********\n");
-        printf("read  msg len:   %d   buff size: %d\n",
-               current_msg_len, _msize(read_buffer));
-#endif
+        // I am using needed size +5 in case I need to append %0
+        // and <CR> while giving me a 0x00 final char for strlen
         if (((current_msg_len + 5) > _msize(read_buffer)) ||
             (_msize(read_buffer) > (current_msg_len * 4)))
         {
-#ifdef DEBUG
-            printf("Read buffer mem change\n");
-#endif
-            // msglenbuffer = current_msg_len + 5; // new buffer size
-            read_buffer = (char *)realloc(read_buffer, (current_msg_len + 4));
+            read_buffer = (char *)realloc(read_buffer, (current_msg_len + 5));
             if (read_buffer == NULL)
                 return (MKMSG_MEM_ERROR);
         }
-#ifdef DEBUG
-        printf("New read buffer: %d\n", _msize(read_buffer));
-#endif
 
-        // clear the read_buffer -- set all to 0x00
+        // clear the read_buffer -- set all to 0x00 this will
+        // give me a clean strlen return
         memset(read_buffer, 0x00, _msize(read_buffer));
 
-        // read in the message
+        // read in the message to the read buffer
         fread(read_buffer, sizeof(char), current_msg_len, fpi);
+
+        // had a couple questionable messages (which could have been
+        // my fault) so this will give me a know string to change
+        // the right end of the string
+        current_msg_len = strlen(read_buffer);
 
         // As a side note - any message can use the <CR> option!
         // If the original message ended with %0, it is then compiled
         // without a <CR>. So we need to check each input line for
-        // 0x0D 0x0A and if does not exist then add %0 and 0x0D 0x0A
+        // 0x0D 0x0A and if does not exist then add %0 and 0x0A
 
         // check for 0x0A and 0x0D at end of message
+        /*if (read_buffer[(current_msg_len - 1)] == 0x0A &&
+            read_buffer[(current_msg_len - 2)] == 0x0D)
+        {
+            read_buffer[(current_msg_len - 1)] = 0x00;
+            read_buffer[(current_msg_len - 2)] = 0x0A;
+            current_msg_len -= 1;
+        }*/
+
         if (read_buffer[(current_msg_len - 1)] != 0x0A &&
             read_buffer[(current_msg_len - 2)] != 0x0D)
         {
-            printf("adding\n");
             read_buffer[(current_msg_len + 0)] = '%';
             read_buffer[(current_msg_len + 1)] = '0';
             read_buffer[(current_msg_len + 2)] = 0x0D;
@@ -480,10 +602,7 @@ int readmessages(MESSAGEINFO *messageinfo)
             current_msg_len += 4;
         }
 
-        // get the type of message
-        msg_type = read_buffer[0];
-
-        // set up pointer to skip Msg_Type (1)
+        // set up scratch pointer to skip Msg_Type (1)
         scratchptr = read_buffer;
         *scratchptr++;
         current_msg_len -= 1;
@@ -496,25 +615,14 @@ int readmessages(MESSAGEINFO *messageinfo)
         // I did not need to do this, but just for fun I contract
         // the buffer
 
-#ifdef DEBUG
-        printf("********** Write Mem Check **********\n");
-        printf("write msg len: %d   buff size: %d\n",
-               current_msg_len, _msize(read_buffer));
-#endif
         // check write buffer size -- Do we need a bigger buffer?
         if ((current_msg_len + 15) > _msize(write_buffer) ||
             (_msize(write_buffer) > (current_msg_len * 5)))
         {
-#ifdef DEBUG
-            printf("Write buffer mem change\n");
-#endif
             write_buffer = (char *)realloc(write_buffer, (current_msg_len + 15));
             if (write_buffer == NULL)
                 return (MKMSG_MEM_ERROR);
         }
-#ifdef DEBUG
-        printf("New write buffer: %d\n", _msize(write_buffer));
-#endif
 
         // clear the read_buffer -- set all to 0x00
         memset(write_buffer, 0x00, _msize(write_buffer));
@@ -525,7 +633,7 @@ int readmessages(MESSAGEINFO *messageinfo)
                 messageinfo->identifier[0],
                 messageinfo->identifier[1],
                 messageinfo->identifier[2],
-                msgcount,
+                current_msg,
                 read_buffer[0]);
 
         // add the msginfo to the write buffer
