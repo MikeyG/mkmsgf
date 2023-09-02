@@ -33,6 +33,13 @@ mkmsgf.exe:
   -@lxlite mkmsgf.exe
 !endif
 
+mkmsgd.exe:
+  $(CC) $(CFLAGS) mkmsgd.c
+  $(LD) NAME mkmsgd SYS os2v2 $(LDFLAGS) FILE mkmsgd.obj
+!ifndef DEBUG
+  -@lxlite mkmsgf.exe
+!endif
+
 debug:  .SYMBOLIC
   @set DEBUG=1
   @wmake
