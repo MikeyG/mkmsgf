@@ -1,0 +1,38 @@
+; ********** MKMSGD Message file decompiler **********
+;
+; Input filename           w\MMMSK.MSG
+; MSG File Version:        2
+; Component Identifier:    MSK
+; Number of messages:      16
+; First message number:    1
+;
+; ******************* Country Info *******************
+;
+; Bytes per character:       1
+; Country Code:              0
+; Language family ID:        0
+; Language version ID:       0
+; Number of codepages:       1
+; Codepage 1        0x352 (850)
+;
+; File name:                 MMMSK.msg
+;
+; ** No an extended header **
+;
+MSK
+MSK0001I: MMMSK NDIS device driver %1
+MSK0002I: MMMSK Can't connect to Protocol Manager
+MSK0003I: MMMSK Found device %1
+MSK0004I: MMMSK No supported hardware was found.
+MSK0005I: MMMSK Invalid parameter in PROTOCOL.INI
+MSK0006?: 
+MSK0007?: 
+MSK0008?: 
+MSK0009?: 
+MSK0010?: 
+MSK0011I: MMMSK PHY: %1
+MSK0012I: MMMSK Memory allocate request larger than 64K
+MSK0013I: MMMSK Memory allocate failed %1
+MSK0014I: MMMSK Mac address: %1
+MSK0015I: MMMSK Hardware detected: %1
+MSK0016I: MMMSK Setup interrupt %1

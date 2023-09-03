@@ -1,0 +1,44 @@
+; ********** MKMSGD Message file decompiler **********
+;
+; Input filename           w\xnd.msg
+; MSG File Version:        0
+; Component Identifier:    XND
+; Number of messages:      35
+; First message number:    0
+;
+XND
+XND0000?: 
+XND0001I: The IBM EtherJet Card is detecting cable type:
+XND0002I:   The media detected: 10BaseT.
+XND0003I:   The media detected: AUI.
+XND0004I:   The media detected: 10Base-2.
+XND0005E: No media cable found.
+XND0006E: Cable Type 10Base-T Not Detected.
+XND0007E: Cable Type AUI Not Detected.
+XND0008E: Cable Type 10Base-2 Not Detected.
+XND0009E: EtherJet Device Driver did not load.
+XND0010I: 
+XND0011I: 
+XND0012I: 
+XND0013I: The IBM EtherJet ISA Card device driver V3.04 is loaded and operational.
+XND0014I: The IBM EtherJet PC  Card device driver V3.04 is loaded and operational.
+XND0015I:   Memory Mode Enabled.
+XND0016I:   IO Mode Enabled.
+XND0017E: Card PnP Enable Set illegal.
+XND0018I:   Half Duplex Mode (AutoNegotiated).
+XND0019I:   Full Duplex Mode (AutoNegotiated).
+XND0020I:   Full Duplex Mode (Selected).
+XND0021I:   Half Duplex Mode (Selected).
+XND0022E: EEPROM not found, scanning BIOS for configuration.
+XND0023E: BIOS configuration not found.
+XND0024E: BIOS configuration found and read.
+XND0025E: EEPROM read failure.
+XND0026E: BIOS configuration read failure.
+XND0027E: EEPROM failed checksum validation.
+XND0028E: EtherJet Card not found.
+XND0029E: An IBM EtherJet Card failed to initialize.
+XND0030E: There was no EtherJet PC card found.
+XND0031I: An IBM EtherJet PC Card was removed.
+XND0032I: IBM EtherJet PC Card driver initialized.
+XND0033I: An IBM EtherJet PC Card was inserted.
+XND0034I: 

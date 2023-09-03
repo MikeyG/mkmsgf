@@ -85,14 +85,7 @@ MSGHEADER msgheader = {
 
 FILECOUNTRYINFO countryinfo;
 
-typedef struct suppinfo
-{
-    char langcode[4];
-    int langfam;
-    int langsub;
-    char lang[20];
-    char country[15];
-};
+
 
 struct suppinfo langinfo[] = {
     {"ARA", 1, 2, "Arabic", "Arab Countries"},

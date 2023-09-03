@@ -1,0 +1,38 @@
+; ********** MKMSGD Message file decompiler **********
+;
+; Input filename           w\E1000B.MSG
+; MSG File Version:        2
+; Component Identifier:    E1B
+; Number of messages:      16
+; First message number:    1
+;
+; ******************* Country Info *******************
+;
+; Bytes per character:       1
+; Country Code:              0
+; Language family ID:        0
+; Language version ID:       0
+; Number of codepages:       1
+; Codepage 1        0x352 (850)
+;
+; File name:                 E1000B.msg
+;
+; ** No an extended header **
+;
+E1B
+E1B0001I: E1000B NDIS device driver %1
+E1B0002I: E1000B Can't connect to Protocol Manager
+E1B0003I: E1000B Found device %1
+E1B0004I: E1000B No supported hardware was found.
+E1B0005I: E1000B Invalid parameter in PROTOCOL.INI
+E1B0006?: 
+E1B0007?: 
+E1B0008?: 
+E1B0009?: 
+E1B0010?: 
+E1B0011I: E1000B PHY: %1
+E1B0012I: E1000B Memory allocate request larger than 64K
+E1B0013I: E1000B Memory allocate failed %1
+E1B0014I: E1000B Mac address: %1
+E1B0015I: E1000B Hardware detected: %1
+E1B0016I: E1000B Setup interrupt %1

@@ -204,7 +204,7 @@ int readheader(MESSAGEINFO *messageinfo)
     // buffer to read in header
     char *header = (char *)calloc(sizeof(MSGHEADER1), sizeof(char));
     if (header == NULL)
-        return (MKMSG_MEM_ERROR);
+        return (MKMSG_MEM_ERROR1);
 
     // read header
     int read = fread(header, sizeof(char), sizeof(MSGHEADER1), fp);
@@ -226,43 +226,64 @@ int readheader(MESSAGEINFO *messageinfo)
     messageinfo->numbermsg = msgheader->numbermsg;
     messageinfo->firstmsg = msgheader->firstmsg;
     messageinfo->offsetid = msgheader->offset16bit;
+
+    // found old MSG files that do not fill this in
+    // manually set it and try for read.
+    if (msgheader->hdroffset)
+        messageinfo->hdroffset = msgheader->hdroffset;
+    else
+        messageinfo->hdroffset = 0x1F;
+
     messageinfo->version = msgheader->version;
-    messageinfo->hdroffset = msgheader->hdroffset;
-    messageinfo->countryinfo = msgheader->countryinfo;
-    messageinfo->extenblock = msgheader->extenblock;
-    for (int x = 0; x < 5; x++)
-        messageinfo->reserved[x] = msgheader->reserved[x];
 
-    // *** Get country info
-    // re-allocate buffer to size of FILECOUNTRYINFO1
-    header = (char *)realloc(header, sizeof(FILECOUNTRYINFO1));
-    if (header == NULL)
-        return (MKMSG_MEM_ERROR);
+    // 3 Sep 23 - I was running some MSG files from the Arca ISO and
+    // ran into what looks to be pre-version 2 MSG files or that the
+    // was 0 version -- and most info did not exist - fixed below
 
-    // seek to the block for read
-    fseek(fp, messageinfo->countryinfo, SEEK_SET);
+    // make sure this is a version 2 MSG
+    if (messageinfo->version == 2)
+    {
+        messageinfo->countryinfo = msgheader->countryinfo;
+        messageinfo->extenblock = msgheader->extenblock;
+        for (int x = 0; x < 5; x++)
+            messageinfo->reserved[x] = msgheader->reserved[x];
 
-    // read header
-    read = fread(header, sizeof(char), sizeof(FILECOUNTRYINFO1), fp);
-    if (ferror(fp))
-        return (MKMSG_READ_ERROR);
+        // *** Get country info
+        // re-allocate buffer to size of FILECOUNTRYINFO1
+        header = (char *)realloc(header, sizeof(FILECOUNTRYINFO1));
+        if (header == NULL)
+            return (MKMSG_MEM_ERROR2);
 
-    // FILECOUNTRYINFO1 point to header buffer
-    cpheader = (FILECOUNTRYINFO1 *)header;
+        // seek to the block for read
+        fseek(fp, messageinfo->countryinfo, SEEK_SET);
 
-    // Pulls all country information into MESSAGEINFO
-    messageinfo->bytesperchar = cpheader->bytesperchar;
-    messageinfo->country = cpheader->country;
-    messageinfo->langfamilyID = cpheader->langfamilyID;
-    messageinfo->langversionID = cpheader->langversionID;
-    messageinfo->codepagesnumber = cpheader->codepagesnumber;
-    strcpy(messageinfo->filename, cpheader->filename);
-    for (int x = 0; x < messageinfo->codepagesnumber; x++)
-        messageinfo->codepages[x] = cpheader->codepages[x];
+        // read header
+        read = fread(header, sizeof(char), sizeof(FILECOUNTRYINFO1), fp);
+        if (ferror(fp))
+            return (MKMSG_READ_ERROR);
+
+        // FILECOUNTRYINFO1 point to header buffer
+        cpheader = (FILECOUNTRYINFO1 *)header;
+
+        // Pulls all country information into MESSAGEINFO
+        messageinfo->bytesperchar = cpheader->bytesperchar;
+        messageinfo->country = cpheader->country;
+        messageinfo->langfamilyID = cpheader->langfamilyID;
+        messageinfo->langversionID = cpheader->langversionID;
+        messageinfo->codepagesnumber = cpheader->codepagesnumber;
+        strcpy(messageinfo->filename, cpheader->filename);
+        for (int x = 0; x < messageinfo->codepagesnumber; x++)
+            messageinfo->codepages[x] = cpheader->codepages[x];
+    }
+    else
+    {
+        messageinfo->countryinfo = 0;
+        messageinfo->extenblock = 0;
+    }
 
     // quick check of extended header, it's a small block but be
     // consistent. I do not have an example yet so this is kind of a stub
-    if (messageinfo->extenblock == 0)
+    if (!messageinfo->extenblock)
     {
         // No ext header so set to 0
         messageinfo->extlength = 0;
@@ -273,7 +294,7 @@ int readheader(MESSAGEINFO *messageinfo)
         // re-allocate buffer to size of EXTHDR
         header = (char *)realloc(header, sizeof(EXTHDR));
         if (header == NULL)
-            return (MKMSG_MEM_ERROR);
+            return (MKMSG_MEM_ERROR3);
 
         // seek to the block for read
         fseek(fp, messageinfo->extenblock, SEEK_SET);
@@ -293,18 +314,21 @@ int readheader(MESSAGEINFO *messageinfo)
     // index starts after main header
     messageinfo->indexoffset = messageinfo->hdroffset;
 
-    // start of message area
-    messageinfo->msgoffset = messageinfo->countryinfo + sizeof(FILECOUNTRYINFO1);
+    // again - in versions < 2 FILECOUNTRYINFO doesnot exists
+    // so fix
 
-    // get index size and do check based on offsetid and index size
-    messageinfo->indexsize = messageinfo->countryinfo - messageinfo->hdroffset;
+    // get index size in bytes based on offsetid
     if (messageinfo->offsetid)
-    {
-        if ((messageinfo->indexsize / 2) != messageinfo->numbermsg)
-            return (MKMSG_INDEX_ERROR);
-    }
-    else if ((messageinfo->indexsize / 4) != messageinfo->numbermsg)
-        return (MKMSG_INDEX_ERROR);
+        messageinfo->indexsize = messageinfo->numbermsg * 2;
+    else
+        messageinfo->indexsize = messageinfo->numbermsg * 4;
+
+    // start of message area
+    if (messageinfo->version == 2)
+        messageinfo->msgoffset = messageinfo->countryinfo +
+                                 sizeof(FILECOUNTRYINFO1);
+    else
+        messageinfo->msgoffset = messageinfo->hdroffset + messageinfo->indexsize;
 
     // Since we will determine a message length from the message index
     // contents (next message offset - current message offset) there will
@@ -312,7 +336,7 @@ int readheader(MESSAGEINFO *messageinfo)
     // However, if (messageinfo->extenblock) is true then it can be used.
     // If (messageinfo->extenblock) is false then seek to get end of file
     // and add 1 which will be used as the (final next message offset).
-    if (messageinfo->extenblock)
+    if (messageinfo->extenblock && messageinfo->version == 2)
         messageinfo->msgfinalindex = messageinfo->extenblock;
     else
     {
@@ -349,7 +373,7 @@ int outputheader(MESSAGEINFO *messageinfo)
     // 140 size just because
     char *write_buffer = (char *)calloc(140, sizeof(char));
     if (write_buffer == NULL)
-        return (MKMSG_MEM_ERROR);
+        return (MKMSG_MEM_ERROR4);
 
     sprintf(write_buffer, "%s\n;\n",
             "; ********** MKMSGD Message file decompiler **********");
@@ -377,63 +401,65 @@ int outputheader(MESSAGEINFO *messageinfo)
             messageinfo->firstmsg);
     fwrite(write_buffer, strlen(write_buffer), 1, fpo);
 
-    sprintf(write_buffer, "%s\n;\n",
-            "; ******************* Country Info *******************");
-    fwrite(write_buffer, strlen(write_buffer), 1, fpo);
-
-    sprintf(write_buffer, "; Bytes per character:       %d\n",
-            messageinfo->bytesperchar);
-    fwrite(write_buffer, strlen(write_buffer), 1, fpo);
-
-    sprintf(write_buffer, "; Country Code:              %d\n",
-            messageinfo->country);
-    fwrite(write_buffer, strlen(write_buffer), 1, fpo);
-
-    sprintf(write_buffer, "; Language family ID:        %d\n",
-            messageinfo->langfamilyID);
-    fwrite(write_buffer, strlen(write_buffer), 1, fpo);
-
-    sprintf(write_buffer, "; Language version ID:       %d\n",
-            messageinfo->langversionID);
-    fwrite(write_buffer, strlen(write_buffer), 1, fpo);
-
-    sprintf(write_buffer, "; Number of codepages:       %d\n",
-            messageinfo->codepagesnumber);
-    fwrite(write_buffer, strlen(write_buffer), 1, fpo);
-
-    memset(write_buffer, 0x00, _msize(write_buffer));
-    for (int x = 0; x < messageinfo->codepagesnumber; x++)
-    {
-        sprintf(write_buffer, "; Codepage %d        0x%02X (%d)\n",
-                (x + 1), messageinfo->codepages[x], messageinfo->codepages[x]);
-        fwrite(write_buffer, strlen(write_buffer), 1, fpo);
-    }
-
-    sprintf(write_buffer, ";\n; File name:                 %s\n",
-            messageinfo->filename);
-    fwrite(write_buffer, strlen(write_buffer), 1, fpo);
-
-    if (messageinfo->extenblock)
+    if (messageinfo->version == 2)
     {
         sprintf(write_buffer, "%s\n;\n",
-                ";\n; ** Has an extended header **");
+                "; ******************* Country Info *******************");
         fwrite(write_buffer, strlen(write_buffer), 1, fpo);
 
-        sprintf(write_buffer, "; Ext header length:        %d\n",
-                messageinfo->extlength);
+        sprintf(write_buffer, "; Bytes per character:       %d\n",
+                messageinfo->bytesperchar);
         fwrite(write_buffer, strlen(write_buffer), 1, fpo);
 
-        sprintf(write_buffer, "; Number ext blocks:        %d\n;\n",
-                messageinfo->extnumblocks);
+        sprintf(write_buffer, "; Country Code:              %d\n",
+                messageinfo->country);
         fwrite(write_buffer, strlen(write_buffer), 1, fpo);
+
+        sprintf(write_buffer, "; Language family ID:        %d\n",
+                messageinfo->langfamilyID);
+        fwrite(write_buffer, strlen(write_buffer), 1, fpo);
+
+        sprintf(write_buffer, "; Language version ID:       %d\n",
+                messageinfo->langversionID);
+        fwrite(write_buffer, strlen(write_buffer), 1, fpo);
+
+        sprintf(write_buffer, "; Number of codepages:       %d\n",
+                messageinfo->codepagesnumber);
+        fwrite(write_buffer, strlen(write_buffer), 1, fpo);
+
+        memset(write_buffer, 0x00, _msize(write_buffer));
+        for (int x = 0; x < messageinfo->codepagesnumber; x++)
+        {
+            sprintf(write_buffer, "; Codepage %d        0x%02X (%d)\n",
+                    (x + 1), messageinfo->codepages[x], messageinfo->codepages[x]);
+            fwrite(write_buffer, strlen(write_buffer), 1, fpo);
+        }
+
+        sprintf(write_buffer, ";\n; File name:                 %s\n",
+                messageinfo->filename);
+        fwrite(write_buffer, strlen(write_buffer), 1, fpo);
+
+        if (messageinfo->extenblock)
+        {
+            sprintf(write_buffer, "%s\n;\n",
+                    ";\n; ** Has an extended header **");
+            fwrite(write_buffer, strlen(write_buffer), 1, fpo);
+
+            sprintf(write_buffer, "; Ext header length:        %d\n",
+                    messageinfo->extlength);
+            fwrite(write_buffer, strlen(write_buffer), 1, fpo);
+
+            sprintf(write_buffer, "; Number ext blocks:        %d\n;\n",
+                    messageinfo->extnumblocks);
+            fwrite(write_buffer, strlen(write_buffer), 1, fpo);
+        }
+        else
+        {
+            sprintf(write_buffer, "%s\n;\n",
+                    ";\n; ** No an extended header **");
+            fwrite(write_buffer, strlen(write_buffer), 1, fpo);
+        }
     }
-    else
-    {
-        sprintf(write_buffer, "%s\n;\n",
-                ";\n; ** No an extended header **");
-        fwrite(write_buffer, strlen(write_buffer), 1, fpo);
-    }
-
     // close up and get out
     fclose(fpo);
     free(write_buffer);
@@ -496,19 +522,19 @@ int readmessages(MESSAGEINFO *messageinfo)
     // buffer to read in index
     char *index_buffer = (char *)calloc(messageinfo->indexsize, sizeof(char));
     if (index_buffer == NULL)
-        return (MKMSG_MEM_ERROR);
+        return (MKMSG_MEM_ERROR5);
 
     // buffer to read in a message - start with a 80 size buffer
     // if for some reason bigger is needed realloc latter
     char *read_buffer = (char *)calloc(80, sizeof(char));
     if (read_buffer == NULL)
-        return (MKMSG_MEM_ERROR);
+        return (MKMSG_MEM_ERROR6);
 
     // buffer to write in a message - start with a 80 size buffer
     // if for some reason bigger is needed realloc latter
     char *write_buffer = (char *)calloc(80, sizeof(char));
     if (write_buffer == NULL)
-        return (MKMSG_MEM_ERROR);
+        return (MKMSG_MEM_ERROR7);
 
     // *** get full index into buffer (index_buffer)
 
@@ -540,10 +566,10 @@ int readmessages(MESSAGEINFO *messageinfo)
         large_index = (uint32_t *)index_buffer;
 
     // **** main read - read/write loop
-    for (int x = 0; x < messageinfo->numbermsg; x++)
+    for (int count = 0; count < messageinfo->numbermsg; count++)
     {
         // do the message number counting
-        current_msg = messageinfo->firstmsg + x;
+        current_msg = messageinfo->firstmsg + count;
 
         // handle the uint16 and uint32 index differences
         if (messageinfo->offsetid)
@@ -562,7 +588,7 @@ int readmessages(MESSAGEINFO *messageinfo)
         // with the fseek to end above.
         // As a note, I am going to use msg_curr and msg_next to
         // get the message length.
-        if (x == (messageinfo->numbermsg - 1))
+        if (count == (messageinfo->numbermsg - 1))
             msg_next = messageinfo->msgfinalindex;
 
         // just calc current message length for readability
@@ -585,7 +611,7 @@ int readmessages(MESSAGEINFO *messageinfo)
         {
             read_buffer = (char *)realloc(read_buffer, (current_msg_len + 5));
             if (read_buffer == NULL)
-                return (MKMSG_MEM_ERROR);
+                return (MKMSG_MEM_ERROR8);
         }
 
         // clear the read_buffer -- set all to 0x00 this will
@@ -634,7 +660,7 @@ int readmessages(MESSAGEINFO *messageinfo)
         {
             write_buffer = (char *)realloc(write_buffer, (current_msg_len + 15));
             if (write_buffer == NULL)
-                return (MKMSG_MEM_ERROR);
+                return (MKMSG_MEM_ERROR9);
         }
 
         // clear the read_buffer -- set all to 0x00
@@ -706,24 +732,28 @@ void displayinfo(MESSAGEINFO *messageinfo)
     for (int x = 0; x < 5; x++)
         printf("%02X ", messageinfo->reserved[x]);
     printf("\n");
-    printf("\n*********** Country Info  ***********\n\n");
-    printf("Bytes per character:       %d\n", messageinfo->bytesperchar);
-    printf("Country Code:              %d\n", messageinfo->country);
-    printf("Language family ID:        %d\n", messageinfo->langfamilyID);
-    printf("Language version ID:       %d\n", messageinfo->langversionID);
-    printf("Number of codepages:       %d\n", messageinfo->codepagesnumber);
-    for (int x = 0; x < messageinfo->codepagesnumber; x++)
-        printf("0x%02X (%d)  ", messageinfo->codepages[x], messageinfo->codepages[x]);
-    printf("\n");
-    printf("File name:                 %s\n\n", messageinfo->filename);
-    if (messageinfo->extenblock)
+
+    if (messageinfo->version == 2)
     {
-        printf("** Has an extended header **\n");
-        printf("Ext header length:        %d\n", messageinfo->extlength);
-        printf("Number ext blocks:        %d\n\n", messageinfo->extnumblocks);
+        printf("\n*********** Country Info  ***********\n\n");
+        printf("Bytes per character:       %d\n", messageinfo->bytesperchar);
+        printf("Country Code:              %d\n", messageinfo->country);
+        printf("Language family ID:        %d\n", messageinfo->langfamilyID);
+        printf("Language version ID:       %d\n", messageinfo->langversionID);
+        printf("Number of codepages:       %d\n", messageinfo->codepagesnumber);
+        for (int x = 0; x < messageinfo->codepagesnumber; x++)
+            printf("0x%02X (%d)  ", messageinfo->codepages[x], messageinfo->codepages[x]);
+        printf("\n");
+        printf("File name:                 %s\n\n", messageinfo->filename);
+        if (messageinfo->extenblock)
+        {
+            printf("** Has an extended header **\n");
+            printf("Ext header length:        %d\n", messageinfo->extlength);
+            printf("Number ext blocks:        %d\n\n", messageinfo->extnumblocks);
+        }
+        else
+            printf("** No an extended header **\n\n");
     }
-    else
-        printf("** No an extended header **\n\n");
 
     return;
 }

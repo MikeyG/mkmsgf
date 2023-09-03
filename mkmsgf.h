@@ -128,6 +128,15 @@ typedef struct _MSGINFOL
     uint32_t msgindex; // offset from begin of file
 } MSGINFOL, *PMSGINFOL;
 
+typedef struct suppinfo
+{
+    char langcode[4];
+    int langfam;
+    int langsub;
+    char lang[20];
+    char country[15];
+};
+
 #pragma pack(pop)
 
 // Header of message file
@@ -167,7 +176,6 @@ typedef struct _MESSAGEINFO
     uint32_t msgoffset;           // offset to start of messages
     uint32_t msgfinalindex;       // offset to end of messages
     uint16_t msgstartline;        // start line for compile
-
 } MESSAGEINFO;
 
 // mkmsgf header signature - a valid MSG file alway starts with
