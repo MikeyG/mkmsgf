@@ -119,8 +119,11 @@ int main(int argc, char *argv[])
         if (access(messageinfo.infile, F_OK) != 0)
             exit(MKMSG_INPUT_ERROR);
 
-        _splitpath(messageinfo.infile, messageinfo.indrive,
-                   messageinfo.indir, messageinfo.infname, messageinfo.inext);
+        _splitpath(messageinfo.infile,
+                   messageinfo.indrive,
+                   messageinfo.indir,
+                   messageinfo.infname,
+                   messageinfo.inext);
 
         optind++;
 
@@ -172,10 +175,10 @@ int main(int argc, char *argv[])
 }
 
 /*************************************************************************
- * Function:  readheader( )   
- * 
- * Reads in all the MSG file info and stores in MESSAGEINFO structure                                              
- *                                                                        
+ * Function:  readheader( )
+ *
+ * Reads in all the MSG file info and stores in MESSAGEINFO structure
+ *
  * 1. Read in the MSG file header
  * 2. Check for valid signature
  * 3. Transfer header info into MESSAGEINFO structure
@@ -183,7 +186,7 @@ int main(int argc, char *argv[])
  * 5. Check for extention block and read if exists
  * 6. Calculate message start
  * 7. Calculate index offset and size
- * 
+ *
  * Return:    returns error code or 0 for all good
  *************************************************************************/
 
@@ -327,7 +330,7 @@ int readheader(MESSAGEINFO *messageinfo)
 
 /*************************************************************************
  * Function:  outputheader()
- * 
+ *
  * Creates output file and writes out info header as comments
  * Params: loaded MESSAGEINFO structure as an input
  *
@@ -463,7 +466,7 @@ int outputheader(MESSAGEINFO *messageinfo)
  * 6.14 If V option print to screen
  * 7 Close files and free buffers
  * 8 Return
- * 
+ *
  * Return:    returns error code or 0 for all good
  *
  *************************************************************************/
@@ -676,7 +679,7 @@ int readmessages(MESSAGEINFO *messageinfo)
 
 /*************************************************************************
  * Function:  displayinfo()
- * 
+ *
  * Display MESSAGEINFO data to screen
  *
  *************************************************************************/

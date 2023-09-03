@@ -147,7 +147,7 @@ typedef struct _MESSAGEINFO
     uint8_t identifier[3];        // Identifier (SYS, DOS, NET, etc.)
     uint16_t numbermsg;           // Number of messages
     uint16_t firstmsg;            // Number of the first message
-    int8_t offsetid;              // Index table is 16-bit offsets 0 dword 1 word
+    int8_t offsetid;              // Index table index uint16 == 1 or uint32 == 0
     uint16_t version;             // File version 2 - New Version 0 - Old Version
     uint16_t hdroffset;           // pointer - Offset of index table - size of _MSGHEADER
     uint16_t countryinfo;         // pointer - Offset of country info block (cp)
@@ -166,6 +166,8 @@ typedef struct _MESSAGEINFO
     uint16_t indexsize;           // size in bytes of index
     uint32_t msgoffset;           // offset to start of messages
     uint32_t msgfinalindex;       // offset to end of messages
+    uint16_t msgstartline;        // start line for compile
+
 } MESSAGEINFO;
 
 // mkmsgf header signature - a valid MSG file alway starts with
