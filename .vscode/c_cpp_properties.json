@@ -1,14 +1,25 @@
 {
     "configurations": [
         {
+            "name": "Linux",
+            "includePath": [
+                "${workspaceFolder}/**"
+            ],
+            "defines": [],
+            "compilerPath": "/usr/lib/llvm/16/bin/clang",
+            "cStandard": "c17",
+            "cppStandard": "c++17",
+            "intelliSenseMode": "linux-clang-x64"
+        },
+        {
             "name": "Watcom",
             "includePath": [
-                "${workspaceFolder}/**","/opt/owv2/h/os2/", "/opt/owv2/h/os2/**","/opt/owv2/h/", "/opt/owv2/h/sys/"
+                "${workspaceFolder}/**","/opt/owv2/h/os2/", "/opt/owv2/h/os2/**","/opt/owv2/h/", "/opt/owv2/h/sys/**"
             ],
-            "defines": [ "_M_I86=1","__WATCOMC__=1"
+            "defines": [ "_M_I86=1"
                 
             ],
-            "compilerPath": "/opt/owv2/binl/wcc386",
+            "compilerPath": "/opt/owv2/binp/wcc386.exe",
             "cStandard": "c99",
             "cppStandard": "c++11",
             "intelliSenseMode": "msvc-x86"

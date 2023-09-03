@@ -48,8 +48,6 @@
 #include "mkmsgerr.h"
 #include "version.h"
 
-#include <io.h>
-
 int readheader(MESSAGEINFO *messageinfo);
 int readmessages(MESSAGEINFO *messageinfo);
 int outputheader(MESSAGEINFO *messageinfo);

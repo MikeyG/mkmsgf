@@ -75,7 +75,7 @@ typedef struct _MSGHEADER1
     uint8_t identifier[3]; // Identifier (SYS, DOS, NET, etc.)
     uint16_t numbermsg;    // Number of messages
     uint16_t firstmsg;     // Number of the first message
-    int8_t offset16bit;    // Index table is 16-bit offsets 0 dword 1 word
+    int8_t offset16bit;    // Index table index uint16 == 1 or uint32 == 0
     uint16_t version;      // File version 2 - New Version 0 - Old Version
     uint16_t hdroffset;    // pointer - Offset of index table - size of _MSGHEADER
     uint16_t countryinfo;  // pointer - Offset of country info block (cp)

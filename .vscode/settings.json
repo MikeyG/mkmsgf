@@ -1,10 +1,8 @@
 {
     "files.associations": {
-        "complex": "c",
-        "format": "c",
-        "rexxdefs.h": "c",
         "rexxsaa.h": "c",
+        "rexxdefs.h": "c",
         "os2.h": "c",
-        "unistd.h": "c"
+        "stat.h": "c"
     }
 }
