@@ -59,6 +59,7 @@
 
 int setupheader(MESSAGEINFO *messageinfo);
 void displayinfo(MESSAGEINFO *messageinfo);
+int DecodeLangOpt(char *dargs, MESSAGEINFO *messageinfo);
 
 // ouput display/helper functions
 void usagelong(void);
@@ -86,6 +87,7 @@ int main(int argc, char *argv[])
     uint8_t dispquiet = 0; // quiet all display - unless error
     uint8_t _UnknOpt1 = 0; // asm option
     uint8_t _UnknOpt2 = 0; // C option
+    uint8_t proclang = 0;  // lang opt processed
 
     messageinfo.prgheaddisp = 0; // ??? check
 
@@ -133,6 +135,9 @@ int main(int argc, char *argv[])
         }
     }
 
+    // just cuz - zero out a couple vars
+    messageinfo.codepagesnumber = 0;
+
     // Get program arguments using getopt()
     while ((ch = getopt(argc, argv, "d:D:p:P:l:L:VvHhI:i:AaCcq")) != -1)
     {
@@ -157,9 +162,9 @@ int main(int argc, char *argv[])
 
         case 'l':
         case 'L':
-            // if (proclang)
-            //      ProgError(MKMSG_GETOPT_ERROR, "MKMSGF: Syntax error L option");
-            //  proclang = DecodeLangOpt(optarg);
+            if (proclang)
+                ProgError(MKMSG_GETOPT_ERROR, "MKMSGF: Syntax error L option");
+            proclang = DecodeLangOpt(optarg, &messageinfo);
             break;
 
         case 'v':
@@ -393,6 +398,47 @@ int setupheader(MESSAGEINFO *messageinfo)
     messageinfo->extenblock = 0;
 
     return (0);
+}
+
+/* DecodeLangOpt( )
+ *
+ * get and check cmd line /L option
+ */
+int DecodeLangOpt(char *dargs, MESSAGEINFO *messageinfo)
+{
+    int verchk = 0;
+
+    if (strchr(dargs, ',') == NULL)
+    {
+        ProgError(-1, "MKMSGF: No sub id using 1 default");
+        messageinfo->langversionID = 1;
+        messageinfo->langfamilyID = atoi(dargs);
+    }
+    else
+    {
+        char *ptmp = NULL;
+
+        ptmp = strtok(dargs, ",");
+        messageinfo->langfamilyID = atoi(ptmp);
+
+        ptmp = strtok(NULL, ",");
+        messageinfo->langversionID = atoi(ptmp);
+    }
+
+    if (messageinfo->langfamilyID > 34 ||messageinfo->langfamilyID < 1)
+        ProgError(1, "MKMSGF: Language family is outside of valid codepage range");
+
+    for (int i = 1; langinfo[i].langfam < langinfo[0].langfam; i++)
+    {
+        if (langinfo[i].langfam == messageinfo->langfamilyID)
+            if (langinfo[i].langsub == messageinfo->langversionID)
+                verchk = 1;
+    }
+
+    if (!verchk)
+        ProgError(1, "MKMSGF: Sub id is outside of valid codepage range");
+
+    return 1;
 }
 
 /*************************************************************************

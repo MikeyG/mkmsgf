@@ -70,7 +70,6 @@ MSGHEADER1 msgheader1 = {
     0x00, 0x00, 0x00, 0x00,                         // pointer to ext block - 0 if none
     0x00, 0x00, 0x00, 0x00, 0x00                    // Must be 0 (zero)
 };
-*/
 
 // setup default structures
 MSGHEADER msgheader = {
