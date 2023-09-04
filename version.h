@@ -34,7 +34,7 @@
 #define VERSION_H
 
 
-#define SYSLVERSION     "1.00"
+#define SYSLVERSION     "1.10"
 
 #define OWMAJOR         (__WATCOMC__/100) - 11
 #define OWMINOR         (__WATCOMC__ % 100) / 10

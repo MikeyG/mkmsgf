@@ -12,7 +12,7 @@
  *  Description: Simple clone of the mkmsgf tool.
  *
  *  July 2008 Version 1.0 : Michael K Greene
- * 
+ *
  *  Based on previous work:
  *      (C) 2002-2008 by Yuri Prokushev
  *      (C) 2001 Veit Kannegieser
@@ -67,13 +67,64 @@ void prgheading(void);
 void helpshort(void);
 void helplong(void);
 
-int main()
+int main(int argc, char *argv[])
 {
     int rc = 0;
+
+    uint8_t procinfile = 0;  // keep track getopt - IBM compatabile
 
     char *filename = ".\\w\\testpp.txt";
 
     MESSAGEINFO messageinfo; // holds all the info
+
+    // these I found in the code, here for reference but not used
+    uint8_t *includepath = getenv("INCLUDE");
+    uint8_t *mkmsgfprog = getenv("MKMSGF_PROG");
+    if (mkmsgfprog != NULL)
+        if (!strncmp(mkmsgfprog, "OS2LDR", 6))
+            os2ldr = 1;
+
+    
+    printf("%s\n",*argv[1]);
+
+    // no args - print usage and exit
+    if (argc == 1)
+    {
+        prgheading(); // display program heading
+        helpshort();
+        exit(0);
+    }
+
+    /* *********************************************************************
+     * The following is to just keep the input options getopt and IBM mkmsgf
+     * compatable : MKMSGF infile[.ext] outfile[.ext] [/V]
+     * why? Because using getopt so it does not have to match old format
+     */
+
+    // is the input file first? yes, make compatable with IBM program
+    // so if the first option does not start with / or - then assume it
+    // is a filename
+    if ((*argv[1] != '-') && (*argv[1] != '/'))
+    {                              // first arg prefix - or / ?
+        char *ptmp = argv[optind]; // scratch pointer
+        ++procinfile;              // no - set process infile true
+
+        for (int i = 0; i < strlen(argv[optind]); i++)
+            inputfile[i] = *ptmp++;
+        // GetInputFile();
+        optind++;
+        if (argc > 2)
+        {
+            if ((*argv[2] != '-') && (*argv[2] != '/'))
+                strcpy(outputfile, argv[optind++]); // have output file
+            else
+                GetOutputFile(); // no output file
+        }
+        // else
+        //    GetOutputFile(); // only have input and no args, make output
+    }
+
+
 
     strncpy(messageinfo.infile, filename, strlen(filename));
 
@@ -85,7 +136,6 @@ int main()
     }
 
     displayinfo(&messageinfo);
-
 
     exit(0);
 }
@@ -218,7 +268,7 @@ int setupheader(MESSAGEINFO *messageinfo)
 
     // remains 0 for now
     messageinfo->extenblock = 0;
-    
+
     return (0);
 }
 
@@ -251,7 +301,7 @@ void displayinfo(MESSAGEINFO *messageinfo)
     for (int x = 0; x < 5; x++)
         printf("%02X ", messageinfo->reserved[x]);
     printf("\n");
-    if(messageinfo->reserved) 
+    if (messageinfo->reserved)
         printf("Built with MKMSGF clone (signature):  %s\n", messageinfo->reserved);
     /*    printf("\n*********** Country Info  ***********\n\n");
         printf("Bytes per character:       %d\n", messageinfo->bytesperchar);
@@ -264,14 +314,14 @@ void displayinfo(MESSAGEINFO *messageinfo)
         printf("\n");
         printf("File name:                 %s\n\n", messageinfo->filename);
     */
-        if (messageinfo->extenblock)
-        {
-            printf("** Has an extended header **\n");
-            printf("Ext header length:        %d\n", messageinfo->extlength);
-            printf("Number ext blocks:        %d\n\n", messageinfo->extnumblocks);
-        }
-        else
-            printf("** No an extended header **\n\n");
+    if (messageinfo->extenblock)
+    {
+        printf("** Has an extended header **\n");
+        printf("Ext header length:        %d\n", messageinfo->extlength);
+        printf("Number ext blocks:        %d\n\n", messageinfo->extnumblocks);
+    }
+    else
+        printf("** No an extended header **\n\n");
 
     return;
 }
@@ -313,8 +363,7 @@ void helplong(void)
     printf("\tLanguage ID:\n");
     printf("\tCode\tFamily\tSub\tLanguage\tPrincipal country\n");
     printf("\t----\t------\t---\t--------\t-----------------\n");
-//    for (int i = 0; langinfo[i].langfam != 0; i++)
-//        printf("\t%s\t%d\t%d\t%-20s\t%s\n", langinfo[i].langcode,
-//               langinfo[i].langfam, langinfo[i].langsub, langinfo[i].lang, langinfo[i].country);
+    //    for (int i = 0; langinfo[i].langfam != 0; i++)
+    //        printf("\t%s\t%d\t%d\t%-20s\t%s\n", langinfo[i].langcode,
+    //               langinfo[i].langfam, langinfo[i].langsub, langinfo[i].lang, langinfo[i].country);
 }
-

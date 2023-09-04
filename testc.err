@@ -1,0 +1,8 @@
+testc.c(85): Error! E1011: Symbol 'os2ldr' has not been declared
+testc.c(113): Error! E1011: Symbol 'inputfile' has not been declared
+testc.c(113): Error! E1045: Subscript on non-array
+testc.c(119): Error! E1011: Symbol 'outputfile' has not been declared
+testc.c(119): Warning! W102: Parameter 1: Type mismatch (warning)
+testc.c(119): Note! I2003: source conversion type is 'int'
+testc.c(119): Note! I2004: target conversion type is 'char *'
+testc.c(121): Warning! W131: No prototype found for function 'GetOutputFile'
