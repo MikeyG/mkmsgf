@@ -3,6 +3,7 @@
         "rexxsaa.h": "c",
         "rexxdefs.h": "c",
         "os2.h": "c",
-        "stat.h": "c"
+        "stat.h": "c",
+        "cstdint": "c"
     }
 }

@@ -56,6 +56,8 @@
 #define READBUFFSIZE 1024
 
 MESSAGEINFO messageinfo; // holds all the info
+
+/*
 MSGHEADER1 msgheader1 = {
     0xFF, 0x4D, 0x4B, 0x4D, 0x53, 0x47, 0x46, 0x00, // MKMSG signature
     0x00, 0x00, 0x00,                               // identifer
@@ -68,6 +70,7 @@ MSGHEADER1 msgheader1 = {
     0x00, 0x00, 0x00, 0x00,                         // pointer to ext block - 0 if none
     0x00, 0x00, 0x00, 0x00, 0x00                    // Must be 0 (zero)
 };
+*/
 
 // setup default structures
 MSGHEADER msgheader = {

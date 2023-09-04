@@ -39,7 +39,6 @@
    26 July 2008  Things not supported:
        - DBCS
        - options A and C
-       - dword index values
 */
 
 #define INCL_DOSNLS /* National Language Support values */
@@ -61,21 +60,34 @@
 int setupheader(MESSAGEINFO *messageinfo);
 void displayinfo(MESSAGEINFO *messageinfo);
 
-// ouput display functions
+// ouput display/helper functions
 void usagelong(void);
 void prgheading(void);
 void helpshort(void);
 void helplong(void);
+void ProgError(int exnum, char *dispmsg);
 
 int main(int argc, char *argv[])
 {
     int rc = 0;
+    int ch = 0; // getopt variable
 
-    uint8_t procinfile = 0;  // keep track getopt - IBM compatabile
-
-    char *filename = ".\\w\\testpp.txt";
+    char stopearly = 1;
 
     MESSAGEINFO messageinfo; // holds all the info
+
+    // input/output file names and options
+    uint8_t os2ldr = 0;           // here but not used
+    uint8_t ibm_format_input = 0; // 1= IBM compatabile input args
+    uint8_t outfile_provided = 0; // output file in args
+
+    // getopt options
+    uint8_t verbose = 0;   // verbose output
+    uint8_t dispquiet = 0; // quiet all display - unless error
+    uint8_t _UnknOpt1 = 0; // asm option
+    uint8_t _UnknOpt2 = 0; // C option
+
+    messageinfo.prgheaddisp = 0; // ??? check
 
     // these I found in the code, here for reference but not used
     uint8_t *includepath = getenv("INCLUDE");
@@ -83,9 +95,6 @@ int main(int argc, char *argv[])
     if (mkmsgfprog != NULL)
         if (!strncmp(mkmsgfprog, "OS2LDR", 6))
             os2ldr = 1;
-
-    
-    printf("%s\n",*argv[1]);
 
     // no args - print usage and exit
     if (argc == 1)
@@ -104,29 +113,143 @@ int main(int argc, char *argv[])
     // is the input file first? yes, make compatable with IBM program
     // so if the first option does not start with / or - then assume it
     // is a filename
-    if ((*argv[1] != '-') && (*argv[1] != '/'))
-    {                              // first arg prefix - or / ?
-        char *ptmp = argv[optind]; // scratch pointer
-        ++procinfile;              // no - set process infile true
-
-        for (int i = 0; i < strlen(argv[optind]); i++)
-            inputfile[i] = *ptmp++;
-        // GetInputFile();
+    if ((*argv[1] != '-') && (*argv[1] != '/')) // first arg prefix - or / ?
+    {
+        strncpy(messageinfo.infile, argv[optind], strlen(argv[optind]));
         optind++;
+
+        ++ibm_format_input; // set ibm format
+
+        // we know IBM format so check for output file
         if (argc > 2)
         {
-            if ((*argv[2] != '-') && (*argv[2] != '/'))
-                strcpy(outputfile, argv[optind++]); // have output file
-            else
-                GetOutputFile(); // no output file
+            if ((*argv[2] != '-') && (*argv[2] != '/')) // first arg prefix - or / ?
+            {
+                strncpy(messageinfo.outfile, argv[optind], strlen(argv[optind]));
+                optind++;
+
+                ++outfile_provided; // have output file
+            }
         }
-        // else
-        //    GetOutputFile(); // only have input and no args, make output
     }
 
+    // Get program arguments using getopt()
+    while ((ch = getopt(argc, argv, "d:D:p:P:l:L:VvHhI:i:AaCcq")) != -1)
+    {
 
+        switch (ch)
+        {
 
-    strncpy(messageinfo.infile, filename, strlen(filename));
+        case 'd':
+        case 'D':
+            ProgError(MKMSG_GETOPT_ERROR, "MKMSGF: DBCS not supported");
+            break;
+
+        case 'p':
+        case 'P':
+            if (messageinfo.codepagesnumber < 16)
+            {
+                messageinfo.codepages[messageinfo.codepagesnumber++] = atoi(optarg);
+            }
+            else
+                ProgError(MKMSG_GETOPT_ERROR, "MKMSGF: More than 16 codepages entered");
+            break;
+
+        case 'l':
+        case 'L':
+            // if (proclang)
+            //      ProgError(MKMSG_GETOPT_ERROR, "MKMSGF: Syntax error L option");
+            //  proclang = DecodeLangOpt(optarg);
+            break;
+
+        case 'v':
+        case 'V':
+            if (!verbose)
+                ++verbose;
+            break;
+
+        case '?':
+        case 'h':
+        case 'H':
+            prgheading();
+            usagelong();
+            exit(0);
+            break;
+
+            // Undocumented IBM flags - here but not used
+
+        case 'i': // change used include path, I think for A and C
+        case 'I':
+            includepath = optarg;
+            break;
+
+        case 'a': // the real mkmsgf outputs asm file
+        case 'A':
+            if (!_UnknOpt1)
+                _UnknOpt1++;
+            break;
+
+        case 'c': // the real mkmsgf outputs C file
+        case 'C':
+            if (!_UnknOpt2)
+                _UnknOpt2++;
+            break;
+
+        // my added option
+        case 'q':
+        case 'Q':
+            if (!dispquiet)
+                ++dispquiet;
+            break;
+
+        default:
+            ProgError(MKMSG_GETOPT_ERROR, "MKMSGF: Syntax error unknown option");
+            break;
+        }
+    }
+
+    // quiet flag - cancels verbose
+    if (dispquiet)
+        --verbose;
+
+    // check for input file - getopt compatable cmd line
+    // we either have in/out files or it is error
+    if ((argc == optind) && !ibm_format_input)
+        ProgError(MKMSG_NOINPUT_ERROR, "MKMSGF: no input file");
+
+    // if ibm_format_input is false then using new format
+    // so we need to get input file and maybe the output file
+    if (!ibm_format_input)
+    {
+        strncpy(messageinfo.infile, argv[optind], strlen(argv[optind]));
+        optind++;
+
+        if (argc != optind)
+        {
+            strncpy(messageinfo.outfile, argv[optind], strlen(argv[optind]));
+            optind++;
+
+            ++outfile_provided; // have output file
+        }
+    }
+
+    // setup and check the input / output files
+    if (access(messageinfo.infile, F_OK) != 0)
+        ProgError(MKMSG_INPUT_ERROR, "MKMSGF: Input file not found");
+
+    // splitup input file
+    _splitpath(messageinfo.infile,
+               messageinfo.indrive,
+               messageinfo.indir,
+               messageinfo.infname,
+               messageinfo.inext);
+
+    if (!outfile_provided)
+        sprintf(messageinfo.outfile, "%s%s", messageinfo.infname, ".msg");
+
+    // and process args ???
+
+    // ************ done with args ************
 
     rc = setupheader(&messageinfo);
     if (rc != 0)
@@ -324,6 +447,34 @@ void displayinfo(MESSAGEINFO *messageinfo)
         printf("** No an extended header **\n\n");
 
     return;
+}
+
+/* ProgError( )
+ *
+ * stardard message print
+ *
+ * if exnum < 0 then print heading (if not yet displayed) and
+ * return.
+ * else do the above and exit
+ *
+ */
+void ProgError(int exnum, char *dispmsg)
+{
+    // if (!prgheaddisp)
+    // {
+    prgheading(); // display program heading
+    //    prgheaddisp = 1;
+    //}
+
+    printf("\n%s\n", dispmsg);
+
+    if (exnum < 0)
+        return;
+    else
+    {
+        helpshort();
+        exit(exnum);
+    }
 }
 
 /*

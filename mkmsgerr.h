@@ -1,6 +1,11 @@
 #ifndef MKMSGERR_H
 #define MKMSGERR_H
 
+
+#define MKMSG_GETOPT_ERROR      001     // MKMSGF: DBCS not supported
+#define MKMSG_NOINPUT_ERROR     002     // MKMSGF: no input file
+
+
 // Decompile routine errors
 #define MKMSG_INPUT_ERROR       100     // MKMSG: Bad input file for decompile
 #define MKMSG_OPEN_ERROR        101     // MKMSG: Error open decompile input file
