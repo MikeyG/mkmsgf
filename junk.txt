@@ -1,8 +1,0 @@
-; This is a sample of an input
-; message file for component MAB
-; starting with three comment lines.
-; message file for component MAB
-MAB
-MAB0100E: File not found
-MAB0101?:
-MAB0102H: Usage: del [drive:][path] filename
