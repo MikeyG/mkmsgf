@@ -284,7 +284,11 @@ int main(int argc, char *argv[])
  * Gets and stores header info in MESSAGEINFO structure
  *
  * 1. Open input file
- * 2.
+ * 2. Read past comments
+ * 3. Get identifer and save file read position
+ * 1. Get start message number
+ * 2. Get number of messages
+ * 3. determine index pointer and size uint8/uint32
  *
  * Return:    returns error code or 0 for all good
  *************************************************************************/
@@ -314,28 +318,21 @@ int setupheader(MESSAGEINFO *messageinfo)
 
         if (line[0] != ';')
         {
-            // messageinfo->msgstartline++;
-
             if (strlen(line) > 5) // identifer (3) + 0x0D 0x0A (2)
                 exit(99);
             messageinfo->identifier[0] = line[0];
             messageinfo->identifier[1] = line[1];
             messageinfo->identifier[2] = line[2];
+
+            fgetpos(fpi, &messageinfo->msgstartline);
             break;
         }
-        // else
-        //    messageinfo->msgstartline++;
     }
 
     // make sure number of messages is 0
     messageinfo->numbermsg = 0;
 
-    /*
-     * 1. start message number
-     * 2. get number of messages
-     * 3. determine index pointer and size uint8/uint32
-     * 4.
-     */
+    // Get message start number and number of messages
     while (TRUE)
     {
         // this should be the first message line
@@ -363,8 +360,6 @@ int setupheader(MESSAGEINFO *messageinfo)
         }
     }
 
-    fgetpos(fpi, &messageinfo->msgstartline);
-
     fclose(fpi);
     free(read_buffer);
 
@@ -386,7 +381,7 @@ int setupheader(MESSAGEINFO *messageinfo)
     else
         messageinfo->indexsize = messageinfo->numbermsg * 4;
 
-    // assign header values
+    // assign header values for standard v2 MSG file
     messageinfo->version = 0x0002;                     // set version
     messageinfo->hdroffset = 0x001F;                   // header offset
     messageinfo->indexoffset = messageinfo->hdroffset; // okay dup of hdroffset
@@ -410,12 +405,19 @@ int setupheader(MESSAGEINFO *messageinfo)
     return (0);
 }
 
+/*************************************************************************
+ * Function:  writefile( )
+ *
+ * Reads in all the MSG file info and stores in MESSAGEINFO structure
+ *
+ * 1. Open the input and output files for operations
+ * 2.
+ *
+ * Return:    returns error code or 0 for all good
+ *************************************************************************/
+
 int writefile(MESSAGEINFO *messageinfo)
 {
-
-    char *linein = NULL;
-    size_t linein_len = 0;
-
     // open input file
     FILE *fpi = fopen(messageinfo->infile, "rb");
     if (fpi == NULL)
@@ -431,17 +433,48 @@ int writefile(MESSAGEINFO *messageinfo)
     if (index_buffer == NULL)
         return (MKMSG_MEM_ERROR5);
 
+    // buffer to read in a message - use a 256 byte buffer which
+    // is overkill but not a big deal
+    size_t read_buff_size = 0;
+    char *read_buffer = (char *)calloc(256, sizeof(char));
+    if (read_buffer == NULL)
+        return (MKMSG_MEM_ERROR6);
+
     // return to previous position
     fsetpos(fpi, &messageinfo->msgstartline);
 
+    int msg_num_check = 0;
+    char *readptr = NULL;
+
     while (TRUE)
     {
-        getline(&linein, &linein_len, fpi);
-        if(feof( fpi )) break;
-        printf("%d  %s", linein_len, linein);
-        linein = NULL;
-        linein_len = 0;
+        // clear the read_buffer -- set all to 0x00 this will
+        // give me a clean strlen return
+        memset(read_buffer, 0x00, _msize(read_buffer));
+
+        readptr = read_buffer;
+
+        getline(&read_buffer, &read_buff_size, fpi);
+        if (feof(fpi))
+            break;
+
+        // find message start
+        if (read_buffer[0] != ';')
+        {
+            if (strncmp(messageinfo->identifier, read_buffer, 3) == 0)
+            {
+                readptr += 3;
+
+                printf("msg start\n");
+            }
+            else
+            {
+                printf("continuation\n");
+            }
+        }
     }
+
+    printf("Done\n");
 
     // buffer to read in a message - start with a 80 size buffer
     // if for some reason bigger is needed realloc latter
