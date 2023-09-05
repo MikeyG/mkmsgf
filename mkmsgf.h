@@ -226,7 +226,7 @@ typedef struct _MESSAGEINFO
     uint32_t msgoffset;           // offset to start of messages
     uint32_t msgfinalindex;       // offset to end of messages
     uint16_t msgstartline;        // start line for compile
-    uint8_t prgheaddisp;
+    uint8_t langfamilyIDcode;     // Save array position for easy lookup
 } MESSAGEINFO;
 
 // mkmsgf header signature - a valid MSG file alway starts with
