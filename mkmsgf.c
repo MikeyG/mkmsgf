@@ -232,6 +232,11 @@ int main(int argc, char *argv[])
         }
     }
 
+    /* 1. Check exist input file
+     * 2. Split the input file parts
+     * 3. If out output file, generate out file name
+     */
+
     // setup and check the input / output files
     if (access(messageinfo.infile, F_OK) != 0)
         ProgError(MKMSG_INPUT_ERROR, "MKMSGF: Input file not found");
@@ -252,6 +257,7 @@ int main(int argc, char *argv[])
 
     // ************ done with args ************
 
+    // decompile header/ input file info
     rc = setupheader(&messageinfo);
     if (rc != 0)
     {
@@ -277,7 +283,8 @@ int main(int argc, char *argv[])
  *
  * Gets and stores header info in MESSAGEINFO structure
  *
- * 1.
+ * 1. Open input file
+ * 2.
  *
  * Return:    returns error code or 0 for all good
  *************************************************************************/
@@ -296,14 +303,8 @@ int setupheader(MESSAGEINFO *messageinfo)
     if (fpi == NULL)
         return (MKMSG_OPEN_ERROR);
 
-    // get input file path info into MESSAGEINFO
-    _splitpath(messageinfo->infile,
-               messageinfo->indrive,
-               messageinfo->indir,
-               messageinfo->infname,
-               messageinfo->inext);
-
-    // get identifer and save
+    // get identifer and save, keep track of identifer line
+    // number
     while (TRUE)
     {
         size_t n = 0;
@@ -313,7 +314,7 @@ int setupheader(MESSAGEINFO *messageinfo)
 
         if (line[0] != ';')
         {
-            messageinfo->msgstartline++;
+            // messageinfo->msgstartline++;
 
             if (strlen(line) > 5) // identifer (3) + 0x0D 0x0A (2)
                 exit(99);
@@ -322,17 +323,19 @@ int setupheader(MESSAGEINFO *messageinfo)
             messageinfo->identifier[2] = line[2];
             break;
         }
-        else
-            messageinfo->msgstartline++;
+        // else
+        //    messageinfo->msgstartline++;
     }
 
     // make sure number of messages is 0
     messageinfo->numbermsg = 0;
 
-    // first run through file to get:
-    // 1. start message number
-    // 2. get number of messages
-    // 3. determine index pointer and size
+    /*
+     * 1. start message number
+     * 2. get number of messages
+     * 3. determine index pointer and size uint8/uint32
+     * 4.
+     */
     while (TRUE)
     {
         // this should be the first message line
@@ -360,6 +363,8 @@ int setupheader(MESSAGEINFO *messageinfo)
         }
     }
 
+    fgetpos(fpi, &messageinfo->msgstartline);
+
     fclose(fpi);
     free(read_buffer);
 
@@ -381,10 +386,11 @@ int setupheader(MESSAGEINFO *messageinfo)
     else
         messageinfo->indexsize = messageinfo->numbermsg * 4;
 
+    // assign header values
     messageinfo->version = 0x0002;                     // set version
     messageinfo->hdroffset = 0x001F;                   // header offset
     messageinfo->indexoffset = messageinfo->hdroffset; // okay dup of hdroffset
-    messageinfo->reserved[0] = 0x4D;                   // put this in to mark MKD clone compiled
+    messageinfo->reserved[0] = 0x4D;                   // put this in to mark MKG clone compiled
     messageinfo->reserved[1] = 0x4B;
     messageinfo->reserved[2] = 0x47;
     messageinfo->reserved[3] = 0x00;
@@ -407,6 +413,9 @@ int setupheader(MESSAGEINFO *messageinfo)
 int writefile(MESSAGEINFO *messageinfo)
 {
 
+    char *linein = NULL;
+    size_t linein_len = 0;
+
     // open input file
     FILE *fpi = fopen(messageinfo->infile, "rb");
     if (fpi == NULL)
@@ -422,16 +431,30 @@ int writefile(MESSAGEINFO *messageinfo)
     if (index_buffer == NULL)
         return (MKMSG_MEM_ERROR5);
 
+    // return to previous position
+    fsetpos(fpi, &messageinfo->msgstartline);
+
+    while (TRUE)
+    {
+        getline(&linein, &linein_len, fpi);
+        if(feof( fpi )) break;
+        printf("%d  %s", linein_len, linein);
+        linein = NULL;
+        linein_len = 0;
+    }
+
     // buffer to read in a message - start with a 80 size buffer
     // if for some reason bigger is needed realloc latter
-    char *rw_buffer = (char *)calloc(80, sizeof(char));
-    if (rw_buffer == NULL)
-        return (MKMSG_MEM_ERROR6);
+    // char *rw_buffer = (char *)calloc(80, sizeof(char));
+    // if (rw_buffer == NULL)
+    //    return (MKMSG_MEM_ERROR6);
+
+    // I know this is not fancy, read through to previous start
 
     // close up and get out
     fclose(fpo);
     fclose(fpi);
-    free(rw_buffer);
+    //    free(rw_buffer);
     free(index_buffer);
 
     return (0);
