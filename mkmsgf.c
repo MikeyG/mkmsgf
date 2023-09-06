@@ -444,6 +444,7 @@ int writefile(MESSAGEINFO *messageinfo)
     fsetpos(fpi, &messageinfo->msgstartline);
 
     int msg_num_check = 0;
+    int current_msg_len = 0;
     char *readptr = NULL;
 
     while (TRUE)
@@ -463,27 +464,62 @@ int writefile(MESSAGEINFO *messageinfo)
         {
             if (strncmp(messageinfo->identifier, read_buffer, 3) == 0)
             {
-                // short cut and make sure the format is correct 
+                // First check - is the message type valid
+                if (read_buffer[7] != 'E' && read_buffer[7] != 'H' &&
+                    read_buffer[7] != 'I' && read_buffer[7] != 'P' &&
+                    read_buffer[7] != 'W' && read_buffer[7] != '?')
+                {
+                    fclose(fpi);
+                    fclose(fpo);
+                    free(read_buffer);
+                    free(index_buffer);
+                    ProgError(1, "MKMSGF: Bad message type.");
+                }
+
+                // Second check - check and setup correct message ending
+                // - the message ending needs to be 0x0D 0x0A, if the text
+                // input file was done in a modern text editor the ending
+                // is probably just 0x0A 
+
+                current_msg_len = strlen(read_buffer);
+
+                if (read_buffer[(current_msg_len - 1)] != 0x0A &&
+                    read_buffer[(current_msg_len - 2)] != 0x0D)
+                {
+                    
+                    
+                    read_buffer[(current_msg_len + 0)] = '%';
+                    read_buffer[(current_msg_len + 1)] = '0';
+                    read_buffer[(current_msg_len + 2)] = 0x0D;
+                    read_buffer[(current_msg_len) + 3] = 0x0A;
+                    current_msg_len += 4;
+                }
+
+                // shortcut and make sure the format is correct
                 // for ? messages
-                if(read_buffer[7] == '?') {
+                if (read_buffer[7] == '?')
+                {
                     memset(read_buffer, 0x00, _msize(read_buffer));
                     read_buffer[0] = '?';
                     read_buffer[1] = 0x0D;
                     read_buffer[2] = 0x0A;
                     read_buffer[3] = 0x00;
-                } else {
+                }
+                else
+                {
                     // check if you followed instructions
-                    if (read_buffer[10] != 0x20) {
+                    if (read_buffer[9] != 0x20)
+                    {
                         printf("No space\n");
-                    } else{
+                    }
+                    else
+                    {
                         // move message type to front of message
                         read_buffer[9] = read_buffer[7];
-                        *readptr = &read_buffer[9];
-
+                        *readptr += 9;
+                        printf("%s\n", readptr);
                     }
-                
                 }
-                printf("%s\n", readptr);
             }
             else
             {
