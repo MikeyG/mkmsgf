@@ -463,9 +463,27 @@ int writefile(MESSAGEINFO *messageinfo)
         {
             if (strncmp(messageinfo->identifier, read_buffer, 3) == 0)
             {
-                readptr += 3;
+                // short cut and make sure the format is correct 
+                // for ? messages
+                if(read_buffer[7] == '?') {
+                    memset(read_buffer, 0x00, _msize(read_buffer));
+                    read_buffer[0] = '?';
+                    read_buffer[1] = 0x0D;
+                    read_buffer[2] = 0x0A;
+                    read_buffer[3] = 0x00;
+                } else {
+                    // check if you followed instructions
+                    if (read_buffer[10] != 0x20) {
+                        printf("No space\n");
+                    } else{
+                        // move message type to front of message
+                        read_buffer[9] = read_buffer[7];
+                        *readptr = &read_buffer[9];
 
-                printf("msg start\n");
+                    }
+                
+                }
+                printf("%s\n", readptr);
             }
             else
             {
