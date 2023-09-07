@@ -410,8 +410,24 @@ int setupheader(MESSAGEINFO *messageinfo)
  *
  * Reads in all the MSG file info and stores in MESSAGEINFO structure
  *
- * 1. Open the input and output files for operations
- * 2.
+ * 1 Clear buffer
+ * 2 Set tmp pointer
+ * 3 Get line from input until EOF
+ * Set tmp pointer
+ * 4 Check if line is comment - skip if true
+ * 5 Check for identifer - if true: (new message)
+ * 5.1 Verify valid msg type
+ * increment check msg counter
+ * 5.2 If msg type == ? just brute force it
+ * 5.3 Check for space before message - error if none
+ * 5.4 Update index with correct offset
+ * -> if continuation line starts here after #5 step
+ * 7 Get message length
+ * 8 Check line ending:
+ * - need to be 0x0D 0x0A, might be just 0xA0 depending on editor
+ * - fix before checking for %0
+ * 9 Fix line if ends %0
+ * 10 Ready to write
  *
  * Return:    returns error code or 0 for all good
  *************************************************************************/
@@ -453,13 +469,11 @@ int writefile(MESSAGEINFO *messageinfo)
         // give me a clean strlen return
         memset(read_buffer, 0x00, _msize(read_buffer));
 
-        readptr = read_buffer;
-
         getline(&read_buffer, &read_buff_size, fpi);
         if (feof(fpi))
             break;
 
-        // find message start
+        // find message start - skip comments
         if (read_buffer[0] != ';')
         {
             if (strncmp(messageinfo->identifier, read_buffer, 3) == 0)
@@ -473,27 +487,11 @@ int writefile(MESSAGEINFO *messageinfo)
                     fclose(fpo);
                     free(read_buffer);
                     free(index_buffer);
-                    ProgError(1, "MKMSGF: Bad message type.");
+                    ProgError(1, "MKMSGF: Bad message type."); // fix error
                 }
 
-                // Second check - check and setup correct message ending
-                // - the message ending needs to be 0x0D 0x0A, if the text
-                // input file was done in a modern text editor the ending
-                // is probably just 0x0A 
-
-                current_msg_len = strlen(read_buffer);
-
-                if (read_buffer[(current_msg_len - 1)] != 0x0A &&
-                    read_buffer[(current_msg_len - 2)] != 0x0D)
-                {
-                    
-                    
-                    read_buffer[(current_msg_len + 0)] = '%';
-                    read_buffer[(current_msg_len + 1)] = '0';
-                    read_buffer[(current_msg_len + 2)] = 0x0D;
-                    read_buffer[(current_msg_len) + 3] = 0x0A;
-                    current_msg_len += 4;
-                }
+                // message number count for checks
+                msg_num_check++;
 
                 // shortcut and make sure the format is correct
                 // for ? messages
@@ -504,27 +502,64 @@ int writefile(MESSAGEINFO *messageinfo)
                     read_buffer[1] = 0x0D;
                     read_buffer[2] = 0x0A;
                     read_buffer[3] = 0x00;
+
+                    readptr = read_buffer;
                 }
                 else
                 {
                     // check if you followed instructions
                     if (read_buffer[9] != 0x20)
-                    {
-                        printf("No space\n");
-                    }
+                        ProgError(1, "MKMSGF: Bad message type."); // fix error
                     else
                     {
                         // move message type to front of message
+                        // and set buffer position
                         read_buffer[9] = read_buffer[7];
-                        *readptr += 9;
-                        printf("%s\n", readptr);
+                        readptr = &read_buffer[9];
                     }
                 }
             }
             else
             {
-                printf("continuation\n");
+                // this is a continuation line so just
+                // set the readptr
+                readptr = read_buffer;
             }
+
+            current_msg_len = strlen(readptr);
+
+            printf("%d %s\n", current_msg_len, readptr);
+
+            // Second check - check and setup correct message ending
+            // - the message ending needs to be 0x0D 0x0A, if the text
+            // input file was done in a modern text editor the ending
+            // is probably just 0x0A
+            // Add 0x0D 0x0A 0x00
+
+            if (readptr[(current_msg_len - 1)] != 0x0A &&
+                readptr[(current_msg_len - 2)] != 0x0D)
+            {
+                readptr[(current_msg_len - 1)] = 0x0D;
+                readptr[(current_msg_len)] = 0x0A;
+                readptr[(current_msg_len + 1)] = 0x00;
+
+                // new length
+                current_msg_len = strlen(readptr);
+            }
+
+            printf("%c %c\n ", readptr[(current_msg_len - 4)], readptr[(current_msg_len - 3)]);
+            // Third and final check - fix end if it is a %0 line
+            if (readptr[(current_msg_len - 3)] == '0' &&
+                readptr[(current_msg_len - 4)] == '%')
+            {
+                readptr[(current_msg_len - 3)] = 0x00;
+                readptr[(current_msg_len - 4)] = 0x00;
+
+                // new length
+                current_msg_len = strlen(readptr);
+            }
+
+            printf("%d %s\n", current_msg_len, readptr);
         }
     }
 
