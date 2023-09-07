@@ -4,6 +4,7 @@
         "rexxdefs.h": "c",
         "os2.h": "c",
         "stat.h": "c",
-        "cstdint": "c"
+        "cstdint": "c",
+        "cstdio": "c"
     }
 }

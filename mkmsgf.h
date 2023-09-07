@@ -225,7 +225,7 @@ typedef struct _MESSAGEINFO
     uint16_t indexsize;           // size in bytes of index
     uint32_t msgoffset;           // offset to start of messages
     uint32_t msgfinalindex;       // offset to end of messages
-    fpos_t msgstartline;         // start position for compile
+    fpos_t msgstartline;          // start position for compile
     uint8_t langfamilyIDcode;     // Save array position for easy lookup
 } MESSAGEINFO;
 

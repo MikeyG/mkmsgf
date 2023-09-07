@@ -462,6 +462,7 @@ int writefile(MESSAGEINFO *messageinfo)
     int msg_num_check = 0;
     int current_msg_len = 0;
     char *readptr = NULL;
+    fpos_t index_position;
 
     while (TRUE)
     {
@@ -528,8 +529,6 @@ int writefile(MESSAGEINFO *messageinfo)
 
             current_msg_len = strlen(readptr);
 
-            printf("%d %s\n", current_msg_len, readptr);
-
             // Second check - check and setup correct message ending
             // - the message ending needs to be 0x0D 0x0A, if the text
             // input file was done in a modern text editor the ending
@@ -547,7 +546,7 @@ int writefile(MESSAGEINFO *messageinfo)
                 current_msg_len = strlen(readptr);
             }
 
-            printf("%c %c\n ", readptr[(current_msg_len - 4)], readptr[(current_msg_len - 3)]);
+            //printf("%c %c\n ", readptr[(current_msg_len - 4)], readptr[(current_msg_len - 3)]);
             // Third and final check - fix end if it is a %0 line
             if (readptr[(current_msg_len - 3)] == '0' &&
                 readptr[(current_msg_len - 4)] == '%')
@@ -560,6 +559,9 @@ int writefile(MESSAGEINFO *messageinfo)
             }
 
             printf("%d %s\n", current_msg_len, readptr);
+            fwrite(readptr, sizeof(char), current_msg_len, fpo);
+            fgetpos(fpo, &index_position);
+            printf("Pos:  %d\n", index_position);
         }
     }
 
