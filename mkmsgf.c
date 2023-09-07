@@ -60,6 +60,7 @@
 int setupheader(MESSAGEINFO *messageinfo);
 void displayinfo(MESSAGEINFO *messageinfo);
 int writefile(MESSAGEINFO *messageinfo);
+int writeheader(MESSAGEINFO *messageinfo);
 int DecodeLangOpt(char *dargs, MESSAGEINFO *messageinfo);
 
 // ouput display/helper functions
@@ -268,7 +269,9 @@ int main(int argc, char *argv[])
     DumpMsgInfo(&messageinfo);
     // displayinfo(&messageinfo);
 
-    rc = writefile(&messageinfo);
+    // rc = writefile(&messageinfo);
+
+    rc = writeheader(&messageinfo);
     if (rc != 0)
     {
         printf("RC: %d\n\n", rc);
@@ -456,6 +459,8 @@ int writefile(MESSAGEINFO *messageinfo)
     if (read_buffer == NULL)
         return (MKMSG_MEM_ERROR6);
 
+    // here header
+
     // return to previous position
     fsetpos(fpi, &messageinfo->msgstartline);
 
@@ -546,8 +551,8 @@ int writefile(MESSAGEINFO *messageinfo)
                 current_msg_len = strlen(readptr);
             }
 
-            //printf("%c %c\n ", readptr[(current_msg_len - 4)], readptr[(current_msg_len - 3)]);
-            // Third and final check - fix end if it is a %0 line
+            // printf("%c %c\n ", readptr[(current_msg_len - 4)], readptr[(current_msg_len - 3)]);
+            //  Third and final check - fix end if it is a %0 line
             if (readptr[(current_msg_len - 3)] == '0' &&
                 readptr[(current_msg_len - 4)] == '%')
             {
@@ -580,6 +585,61 @@ int writefile(MESSAGEINFO *messageinfo)
     fclose(fpi);
     //    free(rw_buffer);
     free(index_buffer);
+
+    return (0);
+}
+
+/* writeheader( )
+ *
+ *
+ */
+
+int writeheader(MESSAGEINFO *messageinfo)
+{
+    MSGHEADER1 *msgheader = NULL;
+
+    // write output file open for append
+    FILE *fpo = fopen(messageinfo->outfile, "wb");
+    if (fpo == NULL)
+        return (MKMSG_OPEN_ERROR);
+
+    // buffer to write in a message - start with a 80 size buffer
+    // if for some reason bigger is needed realloc latter
+    char *write_buffer = (char *)calloc(messageinfo->hdroffset, sizeof(char));
+    if (write_buffer == NULL)
+        return (MKMSG_MEM_ERROR7); // fix
+
+    msgheader = (MSGHEADER1 *)write_buffer;
+
+    // load MKMSG signature
+    for (int x = 0; x < 8; x++)
+        msgheader->magic_sig[x] = signature[x];
+
+    for (int x = 0; x < 3; x++)
+        msgheader->identifier[x] = messageinfo->identifier[x];
+
+    msgheader->numbermsg = messageinfo->numbermsg;
+    msgheader->firstmsg = messageinfo->firstmsg;
+    msgheader->offset16bit = messageinfo->offsetid;
+    msgheader->version = messageinfo->version;
+    msgheader->hdroffset = messageinfo->hdroffset;
+    msgheader->countryinfo = messageinfo->countryinfo;
+    msgheader->extenblock = messageinfo->extenblock;
+
+    for (int x = 0; x < 3; x++)
+        msgheader->reserved[x] = messageinfo->reserved[x];
+
+    fwrite(msgheader, sizeof(char), messageinfo->hdroffset, fpo);
+
+    // generate and write empty index
+    write_buffer = (char *)realloc(write_buffer, messageinfo->indexsize);
+    if (write_buffer == NULL)
+        return (MKMSG_MEM_ERROR2);
+
+    fwrite(write_buffer, sizeof(char), messageinfo->indexsize, fpo);
+
+    fclose(fpo);
+    free(write_buffer);
 
     return (0);
 }
