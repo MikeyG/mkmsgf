@@ -269,9 +269,14 @@ int main(int argc, char *argv[])
     DumpMsgInfo(&messageinfo);
     // displayinfo(&messageinfo);
 
-    // rc = writefile(&messageinfo);
-
     rc = writeheader(&messageinfo);
+    if (rc != 0)
+    {
+        printf("RC: %d\n\n", rc);
+        exit(rc);
+    }
+
+    rc = writefile(&messageinfo);
     if (rc != 0)
     {
         printf("RC: %d\n\n", rc);
@@ -405,6 +410,12 @@ int setupheader(MESSAGEINFO *messageinfo)
     // remains 0 for now
     messageinfo->extenblock = 0;
 
+    // TEMP stuff
+    strncpy(messageinfo->filename,
+            messageinfo->outfile,
+            strlen(messageinfo->outfile));
+    messageinfo->country = 0;
+
     return (0);
 }
 
@@ -443,7 +454,7 @@ int writefile(MESSAGEINFO *messageinfo)
         return (MKMSG_OPEN_ERROR);
 
     // write output file open for append
-    FILE *fpo = fopen(messageinfo->outfile, "wb");
+    FILE *fpo = fopen(messageinfo->outfile, "ab");
     if (fpo == NULL)
         return (MKMSG_OPEN_ERROR);
 
@@ -463,6 +474,7 @@ int writefile(MESSAGEINFO *messageinfo)
 
     // return to previous position
     fsetpos(fpi, &messageinfo->msgstartline);
+    fsetpos(fpo, &messageinfo->msgoffset);
 
     int msg_num_check = 0;
     int current_msg_len = 0;
@@ -597,6 +609,7 @@ int writefile(MESSAGEINFO *messageinfo)
 int writeheader(MESSAGEINFO *messageinfo)
 {
     MSGHEADER1 *msgheader = NULL;
+    FILECOUNTRYINFO1 *cntryheader = NULL;
 
     // write output file open for append
     FILE *fpo = fopen(messageinfo->outfile, "wb");
@@ -636,7 +649,33 @@ int writeheader(MESSAGEINFO *messageinfo)
     if (write_buffer == NULL)
         return (MKMSG_MEM_ERROR2);
 
+    memset(write_buffer, 0x00, _msize(write_buffer));
     fwrite(write_buffer, sizeof(char), messageinfo->indexsize, fpo);
+
+    // generate and write empty index
+    write_buffer = (char *)realloc(write_buffer, sizeof(FILECOUNTRYINFO1));
+    if (write_buffer == NULL)
+        return (MKMSG_MEM_ERROR2);
+
+    memset(write_buffer, 0x00, _msize(write_buffer));
+    cntryheader = (FILECOUNTRYINFO1 *)write_buffer;
+
+    cntryheader->bytesperchar = messageinfo->bytesperchar;
+    cntryheader->country = messageinfo->country;
+    cntryheader->langfamilyID = messageinfo->langfamilyID;
+    cntryheader->langversionID = messageinfo->langversionID;
+    cntryheader->codepagesnumber = messageinfo->codepagesnumber;
+
+    for (int x = 0; x < cntryheader->codepagesnumber; x++)
+        cntryheader->codepages[x] = messageinfo->codepages[x];
+
+    strncpy(cntryheader->filename,
+            messageinfo->filename,
+            strlen(messageinfo->filename));
+
+    cntryheader->filler = 0x00;
+
+    fwrite(cntryheader, sizeof(char), sizeof(FILECOUNTRYINFO1), fpo);
 
     fclose(fpo);
     free(write_buffer);
