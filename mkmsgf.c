@@ -390,10 +390,10 @@ int setupheader(MESSAGEINFO *messageinfo)
         messageinfo->indexsize = messageinfo->numbermsg * 4;
 
     // assign header values for standard v2 MSG file
-    messageinfo->version = 0x0002;                     // set version
-    messageinfo->hdroffset = 0x001F;                   // header offset
-    messageinfo->indexoffset = messageinfo->hdroffset; // okay dup of hdroffset
-    messageinfo->reserved[0] = 0x4D;                   // put this in to mark MKG clone compiled
+    messageinfo->version = 0x0002;                             // set version
+    messageinfo->hdroffset = 0x001F;                           // header offset
+    messageinfo->indexoffset = (fpos_t)messageinfo->hdroffset; // okay dup of hdroffset
+    messageinfo->reserved[0] = 0x4D;                           // put this in to mark MKG clone compiled
     messageinfo->reserved[1] = 0x4B;
     messageinfo->reserved[2] = 0x47;
     messageinfo->reserved[3] = 0x00;
@@ -470,22 +470,47 @@ int writefile(MESSAGEINFO *messageinfo)
     if (read_buffer == NULL)
         return (MKMSG_MEM_ERROR6);
 
-    // here header
+    int msg_num_check = 0;
+    int current_msg_len = 0;
+    char *readptr = NULL;
+    fpos_t index_position;
+
+    // index pointers
+    uint16_t *small_index = NULL; // used if index pointers uint16
+    uint32_t *large_index = NULL; // used if index pointers uint32
 
     // return to previous position
     fsetpos(fpi, &messageinfo->msgstartline);
     fsetpos(fpo, &messageinfo->msgoffset);
 
-    int msg_num_check = 0;
-    int current_msg_len = 0;
-    char *readptr = NULL;
-    fpos_t index_position;
+    // pick the pointer based on index uint16 or uint32
+    if (messageinfo->offsetid)
+        small_index = (uint16_t *)index_buffer;
+    else
+        large_index = (uint32_t *)index_buffer;
 
     while (TRUE)
     {
         // clear the read_buffer -- set all to 0x00 this will
         // give me a clean strlen return
         memset(read_buffer, 0x00, _msize(read_buffer));
+
+        fgetpos(fpo, &index_position);
+
+        printf("Pis  %d   ", (uint32_t)index_position);
+
+        if (messageinfo->offsetid)
+        {
+            printf(" %d  ", *small_index);
+            *small_index = (uint16_t)index_position;
+            printf(" %d\n", *small_index);
+            *small_index++;
+        }
+        else
+        {
+            *large_index = (uint32_t)index_position;
+            *large_index++;
+        }
 
         getline(&read_buffer, &read_buff_size, fpi);
         if (feof(fpi))
@@ -575,12 +600,24 @@ int writefile(MESSAGEINFO *messageinfo)
                 current_msg_len = strlen(readptr);
             }
 
-            printf("%d %s\n", current_msg_len, readptr);
+            // printf("%d %s\n", current_msg_len, readptr);
             fwrite(readptr, sizeof(char), current_msg_len, fpo);
-            fgetpos(fpo, &index_position);
-            printf("Pos:  %d\n", index_position);
+            // fgetpos(fpo, &index_position);
+            // printf("Pos:  %d\n", index_position);
         }
     }
+
+small_index = (uint16_t *)index_buffer;
+for(int x=0; x<messageinfo->numbermsg;x++)
+{
+        if (messageinfo->offsetid)
+            printf(" 0x%04X\n", *small_index++);
+}
+    
+    
+    // write index
+    fsetpos(fpo, &messageinfo->indexoffset);
+    fwrite(index_buffer, sizeof(char), messageinfo->indexsize, fpo);
 
     printf("Done\n");
 

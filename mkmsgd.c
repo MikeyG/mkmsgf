@@ -501,7 +501,7 @@ int readmessages(MESSAGEINFO *messageinfo)
 {
     // index pointers
     uint16_t *small_index = NULL;      // used if index pointers uint16
-    uint32_t *large_index = NULL;      // used if index pointers uint16
+    uint32_t *large_index = NULL;      // used if index pointers uint32
     char msginfo[10] = {0};            // current message header
     char *scratchptr = NULL;           // scratch pointer
     unsigned long msg_curr = 0;        // pointer to current index msg

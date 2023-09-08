@@ -221,7 +221,7 @@ typedef struct _MESSAGEINFO
     uint8_t filename[CCHMAXPATH]; // Name of file
     uint16_t extlength;           // length of ???
     uint16_t extnumblocks;        // number of additional sub FILECOUNTRYINFO blocks
-    uint16_t indexoffset;         // okay dup of hdroffset
+    fpos_t indexoffset;           // okay dup of hdroffset
     uint16_t indexsize;           // size in bytes of index
     fpos_t msgoffset;             // offset to start of messages
     uint32_t msgfinalindex;       // offset to end of messages
