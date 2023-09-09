@@ -38,7 +38,7 @@
 /*
    26 July 2008  Things not supported:
        - DBCS
-       - options A and C
+       - options A and C 
 */
 
 #define INCL_DOSNLS /* National Language Support values */
@@ -95,7 +95,8 @@ int main(int argc, char *argv[])
     messageinfo.langversionID = 0;
     messageinfo.bytesperchar = 1;
 
-    // these I found in the code, here for reference but not used
+    // these I found in the disassembled code, here for reference 
+    // but not used - just for reference
     // uint8_t *includepath = getenv("INCLUDE");
     // uint8_t *mkmsgfprog = getenv("MKMSGF_PROG");
     // if (mkmsgfprog != NULL)
@@ -186,7 +187,7 @@ int main(int argc, char *argv[])
 
             // Undocumented IBM flags - here but not used
 
-        case 'i': // change used include path, I think for A and C
+        case 'i': // include path, I think only for A and C
         case 'I':
         case 'a': // the real mkmsgf outputs asm file
         case 'A':
@@ -427,25 +428,32 @@ int setupheader(MESSAGEINFO *messageinfo)
  *
  * Reads in all the MSG file info and stores in MESSAGEINFO structure
  *
- * 1 Clear buffer
- * 2 Set tmp pointer
- * 3 Get line from input until EOF
- * Set tmp pointer
- * 4 Check if line is comment - skip if true
- * 5 Check for identifer - if true: (new message)
- * 5.1 Verify valid msg type
- * increment check msg counter
- * 5.2 If msg type == ? just brute force it
- * 5.3 Check for space before message - error if none
- * 5.4 Update index with correct offset
- * -> if continuation line starts here after #5 step
- * 7 Get message length
- * 8 Check line ending:
- * - need to be 0x0D 0x0A, might be just 0xA0 depending on editor
- * - fix before checking for %0
- * 9 Fix line if ends %0
- * 10 Ready to write
+ * 1 Open input file in read and out put file in update mode
+ * 2 Allocate index and read buffer
+ * 3 Set input and output file positions
+ * 4 Set index pointer based on uint8/uint32 sizes
+ * 5 *** start main loop ***
+ * 5.1 Clear read buffer
+ * 5.2 Get current read poistion and store in index
+ * 5.3 Read in message line
+ * 5.4 Check for comment - if true read next line -> 5.1
+ * 5.5 Line starts with msg ID? Yes new message else -> 5.9
+ * 5.6 Check if valid msg type - E, I, W, H, P, ? --> error if not
+ * 5.7 Increment message tracking number
+ * 5.8.1 Check for ? message if true then generate full ? message to save
+ *     time else process E, I, W, H, P msg types and set scratch pointer
+ * 5.8.2.1 Check for the mandatory space after : exit if not present
+ * 5.8.2.2 Move msg type to space and set scratch pointer 
+ * 5.9 Continuation line -- set scratch pointer
  *
+ * 6 Get message length
+ * 7 Check/fix 0x0D 0x0A ending of line
+ * 8 Check and fix for %0 lines
+ * 9 Write message line to output file
+ * ** end main loop
+ * 10 Seek to index start and write index
+ * 
+ * 
  * Return:    returns error code or 0 for all good
  *************************************************************************/
 
@@ -457,7 +465,7 @@ int writefile(MESSAGEINFO *messageinfo)
         return (MKMSG_OPEN_ERROR);
 
     // write output file open for append
-    FILE *fpo = fopen(messageinfo->outfile, "ab");
+    FILE *fpo = fopen(messageinfo->outfile, "r+b");
     if (fpo == NULL)
         return (MKMSG_OPEN_ERROR);
 
@@ -476,11 +484,9 @@ int writefile(MESSAGEINFO *messageinfo)
     if (read_buffer == NULL)
         return (MKMSG_MEM_ERROR6);
 
-    // here header
-
     // return to previous position
     fsetpos(fpi, &messageinfo->msgstartline); // input after id line
-    fsetpos(fpo, &messageinfo->msgoffset);    // move to msg area
+    fsetpos(fpo, &messageinfo->msgoffset);    // move to start msg area
 
     int msg_num_check = 0;
     int current_msg_len = 0;
@@ -509,10 +515,7 @@ int writefile(MESSAGEINFO *messageinfo)
 
         // handle the uint16 and uint32 index differences
         if (messageinfo->offsetid)
-        {
             small_index[msg_num_check] = (uint16_t)index_position;
-            printf("Pos:  0x%04X  0x%04X\n", index_position, small_index[msg_num_check]);
-        }
         else
             large_index[msg_num_check] = (uint32_t)index_position;
 
@@ -620,22 +623,13 @@ int writefile(MESSAGEINFO *messageinfo)
         }
     }
 
-    // position to index start and write index
+    // position to index start and write index -- I could
+    // used fwrite - just decided to write index like this:
     fseek(fpo, messageinfo->indexoffset, SEEK_SET);
     for (int x = 0; x < messageinfo->indexsize; x++)
         fputc(index_buffer[x], fpo);
 
-    //    fwrite(index_buffer, sizeof(char), messageinfo->indexsize, fpo);
-
     printf("Done\n");
-
-    // buffer to read in a message - start with a 80 size buffer
-    // if for some reason bigger is needed realloc latter
-    // char *rw_buffer = (char *)calloc(80, sizeof(char));
-    // if (rw_buffer == NULL)
-    //    return (MKMSG_MEM_ERROR6);
-
-    // I know this is not fancy, read through to previous start
 
     // close up and get out
     fclose(fpo);
@@ -653,7 +647,7 @@ int writefile(MESSAGEINFO *messageinfo)
 
 int writeheader(MESSAGEINFO *messageinfo)
 {
-    MSGHEADER1 *msgheader = NULL;
+    MSGHEADER *msgheader = NULL;
     FILECOUNTRYINFO1 *cntryheader = NULL;
 
     // write output file open for append
@@ -667,7 +661,7 @@ int writeheader(MESSAGEINFO *messageinfo)
     if (write_buffer == NULL)
         return (MKMSG_MEM_ERROR7); // fix
 
-    msgheader = (MSGHEADER1 *)write_buffer;
+    msgheader = (MSGHEADER *)write_buffer;
 
     // load MKMSG signature
     for (int x = 0; x < 8; x++)
@@ -796,7 +790,7 @@ void displayinfo(MESSAGEINFO *messageinfo)
     printf("\n");
     if (messageinfo->reserved)
         printf("Built with MKMSGF clone (signature):  %s\n", messageinfo->reserved);
-    /*    printf("\n*********** Country Info  ***********\n\n");
+        printf("\n*********** Country Info  ***********\n\n");
         printf("Bytes per character:       %d\n", messageinfo->bytesperchar);
         printf("Country Code:              %d\n", messageinfo->country);
         printf("Language family ID:        %d\n", messageinfo->langfamilyID);
@@ -806,7 +800,7 @@ void displayinfo(MESSAGEINFO *messageinfo)
             printf("0x%02X (%d)  ", messageinfo->codepages[x], messageinfo->codepages[x]);
         printf("\n");
         printf("File name:                 %s\n\n", messageinfo->filename);
-    */
+
     if (messageinfo->extenblock)
     {
         printf("** Has an extended header **\n");

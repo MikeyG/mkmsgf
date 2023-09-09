@@ -53,23 +53,10 @@
 
 #pragma pack(push, 1)
 
-// Header of message file
-typedef struct _MSGHEADER
-{
-    uint8_t magic[8];        // Magic word signature
-    uint8_t identifier[3];   // Identifier (SYS, DOS, NET, etc.)
-    uint16_t msgnumber;      // Number of messages
-    uint16_t firstmsgnumber; // Number of the first message
-    int8_t offset16bit;      // Index table is 16-bit offsets 0 uint32_t / 1 uint16_t
-    uint16_t version;        // File version 2 - New Version 0 - Old Version
-    uint16_t indextaboffset; // pointer - Offset of index table - size of _MSGHEADER
-    int8_t countryinfo;      // pointer - Offset of country info block
-    int16_t nextcoutryinfo;
-    uint8_t reserved[8]; // Must be 0 (zero)
-} MSGHEADER, *PMSGHEADER;
+
 
 // Header of message file
-typedef struct _MSGHEADER1
+typedef struct _MSGHEADER
 {
     uint8_t magic_sig[8];  // Magic word signature
     uint8_t identifier[3]; // Identifier (SYS, DOS, NET, etc.)
@@ -81,7 +68,7 @@ typedef struct _MSGHEADER1
     uint16_t countryinfo;  // pointer - Offset of country info block (cp)
     uint32_t extenblock;   // pointer to ext block - 0 if none
     uint8_t reserved[5];   // Must be 0 (zero)
-} MSGHEADER1, *PMSGHEADER1;
+} MSGHEADER, *PMSGHEADER;
 
 // Country Info block of message file
 typedef struct _FILECOUNTRYINFO

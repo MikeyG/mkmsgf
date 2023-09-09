@@ -192,7 +192,7 @@ int main(int argc, char *argv[])
 
 int readheader(MESSAGEINFO *messageinfo)
 {
-    MSGHEADER1 *msgheader = NULL;
+    MSGHEADER *msgheader = NULL;
     FILECOUNTRYINFO1 *cpheader = NULL;
     EXTHDR *extheader = NULL;
 
@@ -202,17 +202,17 @@ int readheader(MESSAGEINFO *messageinfo)
         return (MKMSG_OPEN_ERROR);
 
     // buffer to read in header
-    char *header = (char *)calloc(sizeof(MSGHEADER1), sizeof(char));
+    char *header = (char *)calloc(sizeof(MSGHEADER), sizeof(char));
     if (header == NULL)
         return (MKMSG_MEM_ERROR1);
 
     // read header
-    int read = fread(header, sizeof(char), sizeof(MSGHEADER1), fp);
+    int read = fread(header, sizeof(char), sizeof(MSGHEADER), fp);
     if (ferror(fp))
         return (MKMSG_READ_ERROR);
 
-    // MSGHEADER1 point to header buffer
-    msgheader = (MSGHEADER1 *)header;
+    // MSGHEADER point to header buffer
+    msgheader = (MSGHEADER *)header;
 
     // check header signature, return error no match
     for (int x = 0; x < sizeof(signature); x++)
