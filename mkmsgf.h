@@ -203,30 +203,30 @@ typedef struct _MESSAGEINFO
 
     uint8_t verbose; // how much to see?
     // compile/decompile info
-    uint8_t identifier[3];        // Identifier (SYS, DOS, NET, etc.)
-    uint16_t numbermsg;           // Number of messages
-    uint16_t firstmsg;            // Number of the first message
-    int8_t offsetid;              // Index table index uint16 == 1 or uint32 == 0
-    uint16_t version;             // File version 2 - New Version 0 - Old Version
-    uint16_t hdroffset;           // pointer - Offset of index table - size of _MSGHEADER
-    uint16_t countryinfo;         // pointer - Offset of country info block (cp)
-    uint32_t extenblock;          // better desc?
-    uint8_t reserved[5];          // blank bytes?
-    uint8_t bytesperchar;         // Bytes per char (1 - SBCS, 2 - DBCS)
-    uint16_t country;             // ID country
-    uint16_t langfamilyID;        // Language family ID (As in CPI Reference)
-    uint16_t langversionID;       // Language version ID (As in CPI Reference)
-    uint16_t codepagesnumber;     // Number of codepages
-    uint16_t codepages[16];       // Codepages list (Max 16)
-    uint8_t filename[CCHMAXPATH]; // Name of file
-    uint16_t extlength;           // length of ???
-    uint16_t extnumblocks;        // number of additional sub FILECOUNTRYINFO blocks
-    fpos_t indexoffset;           // okay dup of hdroffset
-    uint16_t indexsize;           // size in bytes of index
-    fpos_t msgoffset;             // offset to start of messages
-    uint32_t msgfinalindex;       // offset to end of messages
-    fpos_t msgstartline;          // start position for compile
-    uint8_t langfamilyIDcode;     // Save array position for easy lookup
+    uint8_t identifier[3];       // Identifier (SYS, DOS, NET, etc.)
+    uint16_t numbermsg;          // Number of messages
+    uint16_t firstmsg;           // Number of the first message
+    int8_t offsetid;             // Index table index uint16 == 1 or uint32 == 0
+    uint16_t version;            // File version 2 - New Version 0 - Old Version
+    uint16_t hdroffset;          // pointer - Offset of index table - size of _MSGHEADER
+    uint16_t countryinfo;        // pointer - Offset of country info block (cp)
+    uint32_t extenblock;         // better desc?
+    uint8_t reserved[5];         // blank bytes?
+    uint8_t bytesperchar;        // Bytes per char (1 - SBCS, 2 - DBCS)
+    uint16_t country;            // ID country
+    uint16_t langfamilyID;       // Language family ID (As in CPI Reference)
+    uint16_t langversionID;      // Language version ID (As in CPI Reference)
+    uint16_t codepagesnumber;    // Number of codepages
+    uint16_t codepages[16];      // Codepages list (Max 16)
+    uint8_t filename[_MAX_PATH]; // Name of file
+    uint16_t extlength;          // length of ???
+    uint16_t extnumblocks;       // number of additional sub FILECOUNTRYINFO blocks
+    fpos_t indexoffset;          // okay dup of hdroffset
+    uint16_t indexsize;          // size in bytes of index
+    fpos_t msgoffset;            // offset to start of messages
+    uint32_t msgfinalindex;      // offset to end of messages
+    fpos_t msgstartline;         // start position for compile
+    uint8_t langfamilyIDcode;    // Save array position for easy lookup
 } MESSAGEINFO;
 
 // mkmsgf header signature - a valid MSG file alway starts with

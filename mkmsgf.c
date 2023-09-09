@@ -250,8 +250,11 @@ int main(int argc, char *argv[])
                messageinfo.inext);
 
     if (!outfile_provided)
+    {
+        for (int x = 0; x < _MAX_PATH; x++)
+            messageinfo.outfile[x] = 0x00;
         sprintf(messageinfo.outfile, "%s%s", messageinfo.infname, ".msg");
-
+    }
     // check input == output file
     if (!strcmp(messageinfo.infile, messageinfo.outfile))
         ProgError(1, "MKMSGF: Input file same as output file");
@@ -390,10 +393,10 @@ int setupheader(MESSAGEINFO *messageinfo)
         messageinfo->indexsize = messageinfo->numbermsg * 4;
 
     // assign header values for standard v2 MSG file
-    messageinfo->version = 0x0002;                             // set version
-    messageinfo->hdroffset = 0x001F;                           // header offset
-    messageinfo->indexoffset = (fpos_t)messageinfo->hdroffset; // okay dup of hdroffset
-    messageinfo->reserved[0] = 0x4D;                           // put this in to mark MKG clone compiled
+    messageinfo->version = 0x0002;                     // set version
+    messageinfo->hdroffset = 0x001F;                   // header offset
+    messageinfo->indexoffset = messageinfo->hdroffset; // okay dup of hdroffset
+    messageinfo->reserved[0] = 0x4D;                   // put this in to mark MKG clone compiled
     messageinfo->reserved[1] = 0x4B;
     messageinfo->reserved[2] = 0x47;
     messageinfo->reserved[3] = 0x00;
@@ -458,17 +461,26 @@ int writefile(MESSAGEINFO *messageinfo)
     if (fpo == NULL)
         return (MKMSG_OPEN_ERROR);
 
-    // buffer to read in index
+    // buffer to read in index - this reserves memory of the
+    // size calculated earlier to hold the index which is
+    // dumped to the file at end of message write
     char *index_buffer = (char *)calloc(messageinfo->indexsize, sizeof(char));
     if (index_buffer == NULL)
         return (MKMSG_MEM_ERROR5);
 
     // buffer to read in a message - use a 256 byte buffer which
-    // is overkill but not a big deal
+    // is overkill but not a big deal - I do not expect lines >256
+    // in length
     size_t read_buff_size = 0;
     char *read_buffer = (char *)calloc(256, sizeof(char));
     if (read_buffer == NULL)
         return (MKMSG_MEM_ERROR6);
+
+    // here header
+
+    // return to previous position
+    fsetpos(fpi, &messageinfo->msgstartline); // input after id line
+    fsetpos(fpo, &messageinfo->msgoffset);    // move to msg area
 
     int msg_num_check = 0;
     int current_msg_len = 0;
@@ -478,10 +490,6 @@ int writefile(MESSAGEINFO *messageinfo)
     // index pointers
     uint16_t *small_index = NULL; // used if index pointers uint16
     uint32_t *large_index = NULL; // used if index pointers uint32
-
-    // return to previous position
-    fsetpos(fpi, &messageinfo->msgstartline);
-    fsetpos(fpo, &messageinfo->msgoffset);
 
     // pick the pointer based on index uint16 or uint32
     if (messageinfo->offsetid)
@@ -495,30 +503,29 @@ int writefile(MESSAGEINFO *messageinfo)
         // give me a clean strlen return
         memset(read_buffer, 0x00, _msize(read_buffer));
 
+        // get current position in outfile -- onentry will be
+        // set to first message after fsetpos above
         fgetpos(fpo, &index_position);
 
-        printf("Pis  %d   ", (uint32_t)index_position);
-
+        // handle the uint16 and uint32 index differences
         if (messageinfo->offsetid)
         {
-            printf(" %d  ", *small_index);
-            *small_index = (uint16_t)index_position;
-            printf(" %d\n", *small_index);
-            *small_index++;
+            small_index[msg_num_check] = (uint16_t)index_position;
+            printf("Pos:  0x%04X  0x%04X\n", index_position, small_index[msg_num_check]);
         }
         else
-        {
-            *large_index = (uint32_t)index_position;
-            *large_index++;
-        }
+            large_index[msg_num_check] = (uint32_t)index_position;
 
+        // here is the line read in
         getline(&read_buffer, &read_buff_size, fpi);
         if (feof(fpi))
             break;
 
         // find message start - skip comments
+        // this is the main loop if not a comment line
         if (read_buffer[0] != ';')
         {
+            // check if ID which indicates message start
             if (strncmp(messageinfo->identifier, read_buffer, 3) == 0)
             {
                 // First check - is the message type valid
@@ -533,8 +540,8 @@ int writefile(MESSAGEINFO *messageinfo)
                     ProgError(1, "MKMSGF: Bad message type."); // fix error
                 }
 
-                // message number count for checks
-                msg_num_check++;
+                // keep track of messages processed
+                msg_num_check += 1;
 
                 // shortcut and make sure the format is correct
                 // for ? messages
@@ -550,7 +557,9 @@ int writefile(MESSAGEINFO *messageinfo)
                 }
                 else
                 {
-                    // check if you followed instructions
+                    // check if followed instructions with a space after colon
+                    // I assume this was why (maybe not) -- just copy the ID
+                    // to the space position and change pointer to the new start
                     if (read_buffer[9] != 0x20)
                         ProgError(1, "MKMSGF: Bad message type."); // fix error
                     else
@@ -562,7 +571,7 @@ int writefile(MESSAGEINFO *messageinfo)
                     }
                 }
             }
-            else
+            else // no ID - continues previous line
             {
                 // this is a continuation line so just
                 // set the readptr
@@ -574,8 +583,7 @@ int writefile(MESSAGEINFO *messageinfo)
             // Second check - check and setup correct message ending
             // - the message ending needs to be 0x0D 0x0A, if the text
             // input file was done in a modern text editor the ending
-            // is probably just 0x0A
-            // Add 0x0D 0x0A 0x00
+            // is probably just 0x0A so add 0x0D 0x0A 0x00
 
             if (readptr[(current_msg_len - 1)] != 0x0A &&
                 readptr[(current_msg_len - 2)] != 0x0D)
@@ -588,36 +596,36 @@ int writefile(MESSAGEINFO *messageinfo)
                 current_msg_len = strlen(readptr);
             }
 
-            // printf("%c %c\n ", readptr[(current_msg_len - 4)], readptr[(current_msg_len - 3)]);
-            //  Third and final check - fix end if it is a %0 line
+            // At this point the message is ready in reference to where
+            // readptr points and each line ends 0x0D 0x0A 0x00
+
+            // Third and final check - fix end if it is a %0 line
+            // if ends in [ % 0 0x0D 0x0A 0x00] remove all four
+            // poistions and make 0x00 - all four just as a easy
+            // way to spot problems in a hex dump
             if (readptr[(current_msg_len - 3)] == '0' &&
                 readptr[(current_msg_len - 4)] == '%')
             {
+                readptr[(current_msg_len - 1)] = 0x00;
+                readptr[(current_msg_len - 2)] = 0x00;
                 readptr[(current_msg_len - 3)] = 0x00;
                 readptr[(current_msg_len - 4)] = 0x00;
 
-                // new length
+                // new length -- up to first 0x00
                 current_msg_len = strlen(readptr);
             }
 
-            // printf("%d %s\n", current_msg_len, readptr);
+            // write out the current message
             fwrite(readptr, sizeof(char), current_msg_len, fpo);
-            // fgetpos(fpo, &index_position);
-            // printf("Pos:  %d\n", index_position);
         }
     }
 
-small_index = (uint16_t *)index_buffer;
-for(int x=0; x<messageinfo->numbermsg;x++)
-{
-        if (messageinfo->offsetid)
-            printf(" 0x%04X\n", *small_index++);
-}
-    
-    
-    // write index
-    fsetpos(fpo, &messageinfo->indexoffset);
-    fwrite(index_buffer, sizeof(char), messageinfo->indexsize, fpo);
+    // position to index start and write index
+    fseek(fpo, messageinfo->indexoffset, SEEK_SET);
+    for (int x = 0; x < messageinfo->indexsize; x++)
+        fputc(index_buffer[x], fpo);
+
+    //    fwrite(index_buffer, sizeof(char), messageinfo->indexsize, fpo);
 
     printf("Done\n");
 
@@ -632,7 +640,7 @@ for(int x=0; x<messageinfo->numbermsg;x++)
     // close up and get out
     fclose(fpo);
     fclose(fpi);
-    //    free(rw_buffer);
+    free(read_buffer);
     free(index_buffer);
 
     return (0);
