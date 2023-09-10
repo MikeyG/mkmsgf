@@ -52,7 +52,7 @@ int readmessages(MESSAGEINFO *messageinfo);
 int outputheader(MESSAGEINFO *messageinfo);
 
 // ouput display/helper functions
-// void usagelong(void);
+void usagelong(void);
 void prgheading(void);
 void helpshort(void);
 void helplong(void);

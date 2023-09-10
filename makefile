@@ -14,7 +14,7 @@ OPT = -otexan
 CC = wcc386
 LD = wlink
 
-INCLUDE = .\;$(%watcom)\h;$(%watcom)\h\os2
+INCLUDE = .\src;$(%watcom)\h;$(%watcom)\h\os2
 
 # the wcd option below surpresses W302 which is okay
 !ifdef DEBUG
@@ -22,20 +22,20 @@ CFLAGS  = -i=$(INCLUDE) -za99 -d3 -wx -od -DDEBUG $(MACHINE) -bm -bt=OS2
 LDFLAGS = d all op map,symf
 !else
 CFLAGS  = -i=$(INCLUDE) -za99 -d0 -wx -zq -wcd=302 $(OPT) $(MACHINE) -bm -bt=OS2
-LDFLAGS =
+LDFLAGS = op map,symf
 !endif
 
 all: mkmsgf.exe mkmsgd.exe
 
-mkmsgf.exe:
-  $(CC) $(CFLAGS) mkmsgf.c
+mkmsgf.exe: 
+  $(CC) $(CFLAGS) src\mkmsgf.c
   $(LD) NAME mkmsgf SYS os2v2 $(LDFLAGS) FILE mkmsgf.obj
 !ifndef DEBUG
   -@lxlite mkmsgf.exe
 !endif
 
-mkmsgd.exe:
-  $(CC) $(CFLAGS) mkmsgd.c
+mkmsgd.exe: 
+  $(CC) $(CFLAGS) src\mkmsgd.c
   $(LD) NAME mkmsgd SYS os2v2 $(LDFLAGS) FILE mkmsgd.obj
 !ifndef DEBUG
   -@lxlite mkmsgd.exe

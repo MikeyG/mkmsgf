@@ -2,3 +2,8 @@
 
 I got bored and did a rewrite which fix a lot of issues. Also added a MSG decompiler MKMSGD.EXE.
 
+10 September
+Added an /E option to MKMSGF to tack on fake extended header.
+
+
+

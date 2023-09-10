@@ -161,7 +161,7 @@ int main(int argc, char *argv[])
 
         case 'e':
         case 'E':
-            messageinfo.fakeextend = 0;
+            messageinfo.fakeextend = 1;
             break;
 
         case 'p':
@@ -469,7 +469,7 @@ int writefile(MESSAGEINFO *messageinfo)
     if (fpi == NULL)
         return (MKMSG_OPEN_ERROR);
 
-    // write output file open for append
+    // write output file open for update
     FILE *fpo = fopen(messageinfo->outfile, "r+b");
     if (fpo == NULL)
         return (MKMSG_OPEN_ERROR);
@@ -633,6 +633,45 @@ int writefile(MESSAGEINFO *messageinfo)
     fseek(fpo, messageinfo->indexoffset, SEEK_SET);
     for (int x = 0; x < messageinfo->indexsize; x++)
         fputc(index_buffer[x], fpo);
+
+    // check the wiki for a description of the extended
+    // header -- add header if passed -e option
+    // So this is step by step just to make sure it
+    // is correct - there is nothing like doing somethng
+    // not needed and screwing (bug) the entire program
+    if (messageinfo->fakeextend)
+    {
+        // close
+        fclose(fpo);
+
+        // write output file open for append
+        FILE *fpo = fopen(messageinfo->outfile, "r+b");
+        if (fpo == NULL)
+            return (MKMSG_OPEN_ERROR);
+
+        // move to end of file
+        fseek(fpo, 0L, SEEK_END);
+
+        // save location
+        uint32_t extenblock = (uint32_t)ftell(fpo);
+
+        // tack on the fake ext header
+        for (int x = 0; x < 4; x++)
+            fputc(extfake[x], fpo);
+
+        fclose(fpo);
+
+        // write output file open for update
+        fpo = fopen(messageinfo->outfile, "r+b");
+        if (fpo == NULL)
+            return (MKMSG_OPEN_ERROR);
+
+        // move to position in header
+        fseek(fpo, 0x16L, SEEK_SET);
+
+        // write out extenblock
+        fwrite(&extenblock, sizeof(uint32_t), 1, fpo);
+    }
 
     printf("Done\n");
 
@@ -860,7 +899,6 @@ void displayinfo(MESSAGEINFO *messageinfo)
             printf("0x%02X (%d)  ", messageinfo->codepages[x], messageinfo->codepages[x]);
         printf("\n");
         printf("File name:                 %s\n\n", messageinfo->filename);
-
         if (messageinfo->extenblock)
         {
             printf("** Has an extended header **\n");
