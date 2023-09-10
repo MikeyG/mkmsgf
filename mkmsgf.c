@@ -38,7 +38,7 @@
 /*
    26 July 2008  Things not supported:
        - DBCS
-       - options A and C 
+       - options A and C
 */
 
 #define INCL_DOSNLS /* National Language Support values */
@@ -58,7 +58,6 @@
 #include "version.h"
 
 int setupheader(MESSAGEINFO *messageinfo);
-void displayinfo(MESSAGEINFO *messageinfo);
 int writefile(MESSAGEINFO *messageinfo);
 int writeheader(MESSAGEINFO *messageinfo);
 int DecodeLangOpt(char *dargs, MESSAGEINFO *messageinfo);
@@ -69,15 +68,21 @@ void prgheading(void);
 void helpshort(void);
 void helplong(void);
 void ProgError(int exnum, char *dispmsg);
-void DumpMsgInfo(MESSAGEINFO *messageinfo);
+void displayinfo(MESSAGEINFO *messageinfo);
 
-// keeping this global so I don't have
-// to change more
-uint8_t prgheaddisp = 0;
+/*************************************************************************
+ * Main( )
+ *
+ * Entry into the program
+ *
+ * Expects a valid txt filey. Will name the output file using the input
+ * file and the MSG extention if an output filename is not provided.
+ *
+ **********************************/
 
 int main(int argc, char *argv[])
 {
-    int rc = 0;
+    int rc = 0; // return code
     int ch = 0; // getopt variable
 
     // input/output file names and options
@@ -94,8 +99,9 @@ int main(int argc, char *argv[])
     messageinfo.langfamilyID = 0;
     messageinfo.langversionID = 0;
     messageinfo.bytesperchar = 1;
+    messageinfo.fakeextend = 0;
 
-    // these I found in the disassembled code, here for reference 
+    // these I found in the disassembled code, here for reference
     // but not used - just for reference
     // uint8_t *includepath = getenv("INCLUDE");
     // uint8_t *mkmsgfprog = getenv("MKMSGF_PROG");
@@ -108,7 +114,7 @@ int main(int argc, char *argv[])
     {
         prgheading(); // display program heading
         helpshort();
-        exit(0);
+        exit(MKMSG_NOERROR);
     }
 
     /* *********************************************************************
@@ -144,13 +150,18 @@ int main(int argc, char *argv[])
     messageinfo.codepagesnumber = 0;
 
     // Get program arguments using getopt()
-    while ((ch = getopt(argc, argv, "d:D:p:P:l:L:VvHhI:i:AaCcq")) != -1)
+    while ((ch = getopt(argc, argv, "d:D:eEp:P:l:L:VvHhI:i:AaCcq")) != -1)
     {
         switch (ch)
         {
         case 'd':
         case 'D':
             ProgError(MKMSG_GETOPT_ERROR, "MKMSGF: Sorry, DBCS not supported");
+            break;
+
+        case 'e':
+        case 'E':
+            messageinfo.fakeextend = 0;
             break;
 
         case 'p':
@@ -236,12 +247,12 @@ int main(int argc, char *argv[])
 
     /* 1. Check exist input file
      * 2. Split the input file parts
-     * 3. If out output file, generate out file name
+     * 3. If no output file, generate out file name
      */
 
     // setup and check the input / output files
     if (access(messageinfo.infile, F_OK) != 0)
-        ProgError(MKMSG_INPUT_ERROR, "MKMSGF: Input file not found");
+        ProgError(MKMSG_INPUT_ERROR, "MKMSGF: Input file does not exist.");
 
     // splitup input file
     _splitpath(messageinfo.infile,
@@ -258,36 +269,30 @@ int main(int argc, char *argv[])
     }
     // check input == output file
     if (!strcmp(messageinfo.infile, messageinfo.outfile))
-        ProgError(1, "MKMSGF: Input file same as output file");
+        ProgError(MKMSG_IN_OUT_COMPARE, "MKMSGF: Input file same as output file");
 
     // ************ done with args ************
 
     // decompile header/ input file info
     rc = setupheader(&messageinfo);
-    if (rc != 0)
-    {
-        printf("RC: %d\n\n", rc);
-        exit(rc);
-    }
+    if (rc != MKMSG_NOERROR)
+        ProgError(rc, "MKMSGF: MSG header setup error");
 
-    DumpMsgInfo(&messageinfo);
-    // displayinfo(&messageinfo);
+    // display info on screen
+    displayinfo(&messageinfo);
 
     rc = writeheader(&messageinfo);
-    if (rc != 0)
-    {
-        printf("RC: %d\n\n", rc);
-        exit(rc);
-    }
+    if (rc != MKMSG_NOERROR)
+        ProgError(rc, "MKMSGF: MSG Header write error");
 
     rc = writefile(&messageinfo);
-    if (rc != 0)
-    {
-        printf("RC: %d\n\n", rc);
-        exit(rc);
-    }
+    if (rc != MKMSG_NOERROR)
+        ProgError(rc, "MKMSGF: MSG file write error");
 
-    exit(0);
+    // if you don't see this then I screwed up
+    printf("\nEnd compile\n");
+
+    exit(MKMSG_NOERROR);
 }
 
 /*************************************************************************
@@ -378,7 +383,7 @@ int setupheader(MESSAGEINFO *messageinfo)
     // calculate whether to use uint16 or uint32 for index
     int handle = open(messageinfo->infile, O_RDONLY | O_TEXT);
     if (handle == -1)
-        return (98);
+        return (MKMSG_OFFID_ERR);
     else
     {
         if (_filelength(handle) <= 50000) // using 50K as pointer tripwire
@@ -420,7 +425,7 @@ int setupheader(MESSAGEINFO *messageinfo)
             strlen(messageinfo->outfile));
     messageinfo->country = 0;
 
-    return (0);
+    return (MKMSG_NOERROR);
 }
 
 /*************************************************************************
@@ -443,7 +448,7 @@ int setupheader(MESSAGEINFO *messageinfo)
  * 5.8.1 Check for ? message if true then generate full ? message to save
  *     time else process E, I, W, H, P msg types and set scratch pointer
  * 5.8.2.1 Check for the mandatory space after : exit if not present
- * 5.8.2.2 Move msg type to space and set scratch pointer 
+ * 5.8.2.2 Move msg type to space and set scratch pointer
  * 5.9 Continuation line -- set scratch pointer
  *
  * 6 Get message length
@@ -452,8 +457,8 @@ int setupheader(MESSAGEINFO *messageinfo)
  * 9 Write message line to output file
  * ** end main loop
  * 10 Seek to index start and write index
- * 
- * 
+ *
+ *
  * Return:    returns error code or 0 for all good
  *************************************************************************/
 
@@ -474,7 +479,7 @@ int writefile(MESSAGEINFO *messageinfo)
     // dumped to the file at end of message write
     char *index_buffer = (char *)calloc(messageinfo->indexsize, sizeof(char));
     if (index_buffer == NULL)
-        return (MKMSG_MEM_ERROR5);
+        return (MKMSG_MEM_ERROR1);
 
     // buffer to read in a message - use a 256 byte buffer which
     // is overkill but not a big deal - I do not expect lines >256
@@ -482,7 +487,7 @@ int writefile(MESSAGEINFO *messageinfo)
     size_t read_buff_size = 0;
     char *read_buffer = (char *)calloc(256, sizeof(char));
     if (read_buffer == NULL)
-        return (MKMSG_MEM_ERROR6);
+        return (MKMSG_MEM_ERROR2);
 
     // return to previous position
     fsetpos(fpi, &messageinfo->msgstartline); // input after id line
@@ -564,7 +569,7 @@ int writefile(MESSAGEINFO *messageinfo)
                     // I assume this was why (maybe not) -- just copy the ID
                     // to the space position and change pointer to the new start
                     if (read_buffer[9] != 0x20)
-                        ProgError(1, "MKMSGF: Bad message type."); // fix error
+                        return (MKMSG_BAD_TYPE);
                     else
                     {
                         // move message type to front of message
@@ -637,13 +642,22 @@ int writefile(MESSAGEINFO *messageinfo)
     free(read_buffer);
     free(index_buffer);
 
-    return (0);
+    return (MKMSG_NOERROR);
 }
 
-/* writeheader( )
+/*************************************************************************
+ * Function:  writeheader( )
+ *
+ * Reads in all the MSG file info and stores in MESSAGEINFO structure
+ *
+ * 1 Open input file in read and out put file in update mode
+ * 2 Allocate index and read buffer
+ * 3 Set input and output file positions
+ * 4 Set index pointer based on uint8/uint32 sizes
  *
  *
- */
+ * Return:    returns error code or 0 for all good
+ *************************************************************************/
 
 int writeheader(MESSAGEINFO *messageinfo)
 {
@@ -659,7 +673,7 @@ int writeheader(MESSAGEINFO *messageinfo)
     // if for some reason bigger is needed realloc latter
     char *write_buffer = (char *)calloc(messageinfo->hdroffset, sizeof(char));
     if (write_buffer == NULL)
-        return (MKMSG_MEM_ERROR7); // fix
+        return (MKMSG_MEM_ERROR3); // fix
 
     msgheader = (MSGHEADER *)write_buffer;
 
@@ -686,7 +700,7 @@ int writeheader(MESSAGEINFO *messageinfo)
     // generate and write empty index
     write_buffer = (char *)realloc(write_buffer, messageinfo->indexsize);
     if (write_buffer == NULL)
-        return (MKMSG_MEM_ERROR2);
+        return (MKMSG_MEM_ERROR4);
 
     memset(write_buffer, 0x00, _msize(write_buffer));
     fwrite(write_buffer, sizeof(char), messageinfo->indexsize, fpo);
@@ -694,7 +708,7 @@ int writeheader(MESSAGEINFO *messageinfo)
     // generate and write empty index
     write_buffer = (char *)realloc(write_buffer, sizeof(FILECOUNTRYINFO));
     if (write_buffer == NULL)
-        return (MKMSG_MEM_ERROR2);
+        return (MKMSG_MEM_ERROR5);
 
     memset(write_buffer, 0x00, _msize(write_buffer));
     cntryheader = (FILECOUNTRYINFO *)write_buffer;
@@ -744,7 +758,7 @@ int DecodeLangOpt(char *dargs, MESSAGEINFO *messageinfo)
 
     // Language family > 1 and < 35
     if (messageinfo->langfamilyID < 1 || messageinfo->langfamilyID > 34)
-        ProgError(1, "MKMSGF: Language family is outside of valid range");
+        return (MKMSG_LANG_OUT_RANGE);
 
     for (int i = 1; i < 35; i++)
     {
@@ -754,9 +768,51 @@ int DecodeLangOpt(char *dargs, MESSAGEINFO *messageinfo)
     }
 
     if (!messageinfo->langfamilyIDcode)
-        ProgError(1, "MKMSGF: Sub id is outside of valid codepage range");
+        return (MKMSG_SUBID_OUT_RANGE);
 
     return 1;
+}
+
+/*
+ * User message functions
+ */
+void usagelong(void)
+{
+    helpshort();
+    helplong();
+}
+
+void helpshort(void)
+{
+    printf("\nMKMSGF infile[.ext] outfile[.ext] [-V]\n");
+    printf("[-D <DBCS range or country>] [-P <code page>] [-L <language id,sub id>]\n");
+}
+
+void helplong(void)
+{
+    printf("\nUse MKMSGF as follows:\n");
+    printf("        MKMSGF <inputfile> <outputfile> [/V]\n");
+    printf("                [/D <DBCS range or country>] [/P <code page>]\n");
+    printf("                [/L <language family id,sub id>]\n");
+    printf("        where the default values are:\n");
+    printf("           code page  -  none\n");
+    printf("           DBCS range -  none\n");
+    printf("        A valid DBCS range is: n10,n11,n20,n21,...,nn0,nn1\n");
+    printf("        A single number is taken as a DBCS country code.\n");
+    printf("        The valid OS/2 language/sublanguage ID values are:\n\n");
+    printf("\tLanguage ID:\n");
+    printf("\tCode\tFamily\tSub\tLanguage\tPrincipal country\n");
+    printf("\t----\t------\t---\t--------\t-----------------\n");
+    for (int i = 0; langinfo[i].langfam != 0; i++)
+        printf("\t%s\t%d\t%d\t%-20s\t%s\n", langinfo[i].langcode,
+               langinfo[i].langfam, langinfo[i].langsub, langinfo[i].lang, langinfo[i].country);
+}
+
+void prgheading(void)
+{
+    printf("\nOperating System/2 Make Message File Utility (MKMSGF) Clone\n");
+    printf("Version %s  Michael Greene <mikeos2@gmail.com>\n", SYSLVERSION);
+    printf("Compiled with Open Watcom %d.%d  %s\n", OWMAJOR, OWMINOR, __DATE__);
 }
 
 /*************************************************************************
@@ -788,8 +844,12 @@ void displayinfo(MESSAGEINFO *messageinfo)
     for (int x = 0; x < 5; x++)
         printf("%02X ", messageinfo->reserved[x]);
     printf("\n");
+
     if (messageinfo->reserved)
         printf("Built with MKMSGF clone (signature):  %s\n", messageinfo->reserved);
+
+    if (messageinfo->version == 2)
+    {
         printf("\n*********** Country Info  ***********\n\n");
         printf("Bytes per character:       %d\n", messageinfo->bytesperchar);
         printf("Country Code:              %d\n", messageinfo->country);
@@ -801,15 +861,15 @@ void displayinfo(MESSAGEINFO *messageinfo)
         printf("\n");
         printf("File name:                 %s\n\n", messageinfo->filename);
 
-    if (messageinfo->extenblock)
-    {
-        printf("** Has an extended header **\n");
-        printf("Ext header length:        %d\n", messageinfo->extlength);
-        printf("Number ext blocks:        %d\n\n", messageinfo->extnumblocks);
+        if (messageinfo->extenblock)
+        {
+            printf("** Has an extended header **\n");
+            printf("Ext header length:        %d\n", messageinfo->extlength);
+            printf("Number ext blocks:        %d\n\n", messageinfo->extnumblocks);
+        }
+        else
+            printf("** No an extended header **\n\n");
     }
-    else
-        printf("** No an extended header **\n\n");
-
     return;
 }
 
@@ -822,108 +882,22 @@ void displayinfo(MESSAGEINFO *messageinfo)
  * else do the above and exit
  *
  */
+
 void ProgError(int exnum, char *dispmsg)
 {
-    // if (!prgheaddisp)
-    // {
-    prgheading(); // display program heading
-    //    prgheaddisp = 1;
-    //}
+    char buffer[80] = {0};
 
-    printf("\n%s\n", dispmsg);
+    sprintf(buffer, "\n%s (%d)\n", dispmsg, exnum);
 
     if (exnum < 0)
+    {
+        printf("%s", buffer);
         return;
+    }
     else
     {
         helpshort();
+        printf("%s", buffer);
         exit(exnum);
     }
-}
-
-/*
- * User message functions
- */
-void usagelong(void)
-{
-    helpshort();
-    helplong();
-}
-
-void prgheading(void)
-{
-    printf("\nOperating System/2 Make Message File Utility (MKMSGF) Clone\n");
-    printf("Version %s  Michael Greene <mike@mgreene.org>\n", SYSLVERSION);
-    printf("Compiled with Open Watcom %d.%d  %s\n", OWMAJOR, OWMINOR, __DATE__);
-}
-
-void helpshort(void)
-{
-    printf("\nMKMSGF infile[.ext] outfile[.ext] [-V]\n");
-    printf("[-D <DBCS range or country>] [-P <code page>] [-L <language id,sub id>]\n");
-}
-
-void helplong(void)
-{
-    printf("\nUse MKMSGF as follows:\n");
-    printf("        MKMSGF <inputfile> <outputfile> [/V]\n");
-    printf("                [/D <DBCS range or country>] [/P <code page>]\n");
-    printf("                [/L <language family id,sub id>]\n");
-    printf("        where the default values are:\n");
-    printf("           code page  -  none\n");
-    printf("           DBCS range -  none\n");
-    printf("        A valid DBCS range is: n10,n11,n20,n21,...,nn0,nn1\n");
-    printf("        A single number is taken as a DBCS country code.\n");
-    printf("        The valid OS/2 language/sublanguage ID values are:\n\n");
-    printf("\tLanguage ID:\n");
-    printf("\tCode\tFamily\tSub\tLanguage\tPrincipal country\n");
-    printf("\t----\t------\t---\t--------\t-----------------\n");
-    //    for (int i = 0; langinfo[i].langfam != 0; i++)
-    //        printf("\t%s\t%d\t%d\t%-20s\t%s\n", langinfo[i].langcode,
-    //               langinfo[i].langfam, langinfo[i].langsub, langinfo[i].lang, langinfo[i].country);
-}
-
-void DumpMsgInfo(MESSAGEINFO *messageinfo)
-{
-    printf("\n*********** Header Info ***********\n\n");
-
-    printf("Input filename         %s\n", messageinfo->infile);
-    printf("Component Identifier:  %c%c%c\n", messageinfo->identifier[0],
-           messageinfo->identifier[1], messageinfo->identifier[2]);
-    printf("Number of messages:    %d\n", messageinfo->numbermsg);
-    printf("First message number:  %d\n", messageinfo->firstmsg);
-    printf("OffsetID:              %d  (Offset %s)\n", messageinfo->offsetid,
-           (messageinfo->offsetid ? "uint16_t" : "uint32_t"));
-    printf("MSG File Version:      %d\n", messageinfo->version);
-    printf("Header offset:         0x%02X (%d)\n",
-           messageinfo->hdroffset, messageinfo->hdroffset);
-    printf("Country Info:          0x%02X (%d)\n",
-           messageinfo->countryinfo, messageinfo->countryinfo);
-    //    printf("Extended Header:       0x%02X (%lu)\n",
-    //           messageinfo->extenblock, messageinfo->extenblock);
-    printf("Reserved area:         ");
-    for (int x = 0; x < 5; x++)
-        printf("%02X ", messageinfo->reserved[x]);
-    printf("\n");
-
-    printf("\n*********** Country Info  ***********\n\n");
-    printf("Bytes per character:       %d\n", messageinfo->bytesperchar);
-    printf("Country Code:              %d\n", messageinfo->country);
-    printf("Language family ID:        %d\n", messageinfo->langfamilyID);
-    printf("Language version ID:       %d\n", messageinfo->langversionID);
-    printf("Number of codepages:       %d\n", messageinfo->codepagesnumber);
-    for (int x = 0; x < messageinfo->codepagesnumber; x++)
-        printf("0x%02X (%d)  ", messageinfo->codepages[x], messageinfo->codepages[x]);
-    printf("\n");
-    /*    printf("File name:                 %s\n\n", messageinfo->filename);
-        if (messageinfo->extenblock)
-        {
-            printf("** Has an extended header **\n");
-            printf("Ext header length:        %d\n", messageinfo->extlength);
-            printf("Number ext blocks:        %d\n\n", messageinfo->extnumblocks);
-        }
-        else
-            printf("** No an extended header **\n\n");
-    */
-    return;
 }

@@ -5,8 +5,8 @@
  *  ========================================================================
  *
  *    Version 1.1       Michael K Greene <mikeos2@gmail.com>
- *                      September 2023 
- * 
+ *                      September 2023
+ *
  *    Version 1.0       July 2008
  *
  *  ========================================================================
@@ -100,7 +100,6 @@ typedef struct suppinfo
 };
 
 struct suppinfo langinfo[] = {
-    {"MAX", 34, 0, "NONE", "NONE"},
     {"ARA", 1, 2, "Arabic", "Arab Countries"},
     {"BGR", 2, 1, "Bulgarian", "Bulgaria"},
     {"CAT", 3, 1, "Catalan", "Spain"},
@@ -147,6 +146,7 @@ struct suppinfo langinfo[] = {
     {"URD", 32, 1, "Urdu", "Pakistan"},
     {"BAH", 33, 1, "Bahasa", "Indonesia"},
     {"SLO", 34, 1, "Slovene", "Slovenia"},
+    {"MAX", 0, 0, "NONE", "NONE"},
 };
 
 #pragma pack(pop)
@@ -189,6 +189,7 @@ typedef struct _MESSAGEINFO
     uint32_t msgfinalindex;      // offset to end of messages
     fpos_t msgstartline;         // start position for compile
     uint8_t langfamilyIDcode;    // Save array position for easy lookup
+    uint8_t fakeextend;          // Append a fake extended header
 } MESSAGEINFO;
 
 // mkmsgf header signature - a valid MSG file alway starts with

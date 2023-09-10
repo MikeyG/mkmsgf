@@ -42,7 +42,6 @@
 #include <io.h>
 #include <sys\stat.h>
 #include <unistd.h>
-
 #include <malloc.h>
 #include "mkmsgf.h"
 #include "mkmsgerr.h"
@@ -51,13 +50,14 @@
 int readheader(MESSAGEINFO *messageinfo);
 int readmessages(MESSAGEINFO *messageinfo);
 int outputheader(MESSAGEINFO *messageinfo);
-void displayinfo(MESSAGEINFO *messageinfo);
 
-// ouput display functions
+// ouput display/helper functions
 // void usagelong(void);
 void prgheading(void);
 void helpshort(void);
 void helplong(void);
+void ProgError(int exnum, char *dispmsg);
+void displayinfo(MESSAGEINFO *messageinfo);
 
 /*************************************************************************
  * Main( )
@@ -71,8 +71,8 @@ void helplong(void);
 
 int main(int argc, char *argv[])
 {
-    int rc = 0;
-    int ch = 0;
+    int rc = 0; // return code
+    int ch = 0; // getopt variable
 
     MESSAGEINFO messageinfo; // holds all the info
     messageinfo.verbose = 0; // start being quiet
@@ -82,16 +82,14 @@ int main(int argc, char *argv[])
     {
         prgheading(); // display program heading
         helpshort();
-        exit(0);
+        exit(MKMSG_NOERROR);
     }
 
     // Get program arguments using getopt()
     while ((ch = getopt(argc, argv, "vVh")) != -1)
     {
-
         switch (ch)
         {
-
         case 'v':
             messageinfo.verbose += 1;
             break;
@@ -102,12 +100,11 @@ int main(int argc, char *argv[])
 
         case 'h':
             prgheading();
-            // usagelong();
-            exit(0);
+            exit(MKMSG_NOERROR);
             break;
 
         default:
-            // ProgError(1, "MKMSGD: Syntax error unknown option");
+            ProgError(MKMSG_GETOPT_ERROR, "MKMSGD: Syntax error unknown option");
             break;
         }
     }
@@ -116,8 +113,9 @@ int main(int argc, char *argv[])
     {
         // optind 1 should be input file
         strncpy(messageinfo.infile, argv[optind], strlen(argv[optind]));
+        printf("here");
         if (access(messageinfo.infile, F_OK) != 0)
-            exit(MKMSG_INPUT_ERROR);
+            ProgError(MKMSG_INPUT_ERROR, "MKMSGD: Input file does not exist.");
 
         _splitpath(messageinfo.infile,
                    messageinfo.indrive,
@@ -138,40 +136,37 @@ int main(int argc, char *argv[])
     {
         prgheading(); // display program heading
         helpshort();
-        exit(0);
+        exit(MKMSG_NOERROR);
     }
+
+    // check input == output file
+    if (!strcmp(messageinfo.infile, messageinfo.outfile))
+        ProgError(MKMSG_IN_OUT_COMPARE, "MKMSGD: Input file same as output file");
+
+    // ************ done with args ************
 
     // decompile header
     rc = readheader(&messageinfo);
-    if (rc != 0)
-    {
-        printf("RC: %d\n\n", rc);
-        exit(rc);
-    }
+    if (rc != MKMSG_NOERROR)
+        ProgError(rc, "MKMSGD: MSG Header read error");
 
     // display info on screen
     displayinfo(&messageinfo);
 
     // write out header
     rc = outputheader(&messageinfo);
-    if (rc != 0)
-    {
-        printf("RC: %d\n\n", rc);
-        exit(rc);
-    }
+    if (rc != MKMSG_NOERROR)
+        ProgError(rc, "MKMSGD: Error generating header");
 
     // decompile the messages and write
     rc = readmessages(&messageinfo);
-    if (rc != 0)
-    {
-        printf("RC: %d\n\n", rc);
-        exit(rc);
-    }
+    if (rc != MKMSG_NOERROR)
+        ProgError(rc, "MKMSGD: Error read MSG messages");
 
     // if you don't see this then I screwed up
     printf("\nEnd Decompile\n");
 
-    return (0);
+    return (MKMSG_NOERROR);
 }
 
 /*************************************************************************
@@ -195,7 +190,7 @@ int readheader(MESSAGEINFO *messageinfo)
     MSGHEADER *msgheader = NULL;
     FILECOUNTRYINFO *cpheader = NULL;
     EXTHDR *extheader = NULL;
-    
+
     // open input file
     FILE *fp = fopen(messageinfo->infile, "rb");
     if (fp == NULL)
@@ -349,7 +344,7 @@ int readheader(MESSAGEINFO *messageinfo)
     fclose(fp);
     free(header);
 
-    return (0);
+    return (MKMSG_NOERROR);
 }
 
 /*************************************************************************
@@ -464,7 +459,7 @@ int outputheader(MESSAGEINFO *messageinfo)
     fclose(fpo);
     free(write_buffer);
 
-    return (0);
+    return (MKMSG_NOERROR);
 }
 
 /*************************************************************************
@@ -700,7 +695,34 @@ int readmessages(MESSAGEINFO *messageinfo)
     free(write_buffer);
     free(index_buffer);
 
-    return (0);
+    return (MKMSG_NOERROR);
+}
+
+/*
+ * User message functions
+ */
+void usagelong(void)
+{
+    helpshort();
+    helplong();
+}
+
+void helpshort(void)
+{
+    printf("\nMKMSGD [-v] infile.msg [outfile.[txt | codepage] ]\n\n");
+}
+
+void helplong(void)
+{
+    printf("\nUse MKMSGD as follows:\n");
+    printf("        [-v] infile.msg [outfile.[txt | codepage] ]\n");
+}
+
+void prgheading(void)
+{
+    printf("\nOperating System/2 Make Message File Decompiler (MKMSGD)\n");
+    printf("Version %s  Michael Greene <mikeos2@gmail.com>\n", SYSLVERSION);
+    printf("Compiled with Open Watcom %d.%d  %s\n", OWMAJOR, OWMINOR, __DATE__);
 }
 
 /*************************************************************************
@@ -733,6 +755,9 @@ void displayinfo(MESSAGEINFO *messageinfo)
         printf("%02X ", messageinfo->reserved[x]);
     printf("\n");
 
+    if (messageinfo->reserved)
+        printf("Built with MKMSGF clone (signature):  %s\n", messageinfo->reserved);
+
     if (messageinfo->version == 2)
     {
         printf("\n*********** Country Info  ***********\n\n");
@@ -754,26 +779,34 @@ void displayinfo(MESSAGEINFO *messageinfo)
         else
             printf("** No an extended header **\n\n");
     }
-
     return;
 }
 
-void prgheading(void)
-{
-    printf("\nOperating System/2 Make Message File Decompiler (MKMSGD)\n");
-    printf("Version %s  Michael Greene <mikeos2@gmail.com>\n", SYSLVERSION);
-    printf("Compiled with Open Watcom %d.%d  %s\n", OWMAJOR, OWMINOR, __DATE__);
-}
+/* ProgError( )
+ *
+ * stardard message print
+ *
+ * if exnum < 0 then print heading (if not yet displayed) and
+ * return.
+ * else do the above and exit
+ *
+ */
 
-void helpshort(void)
+void ProgError(int exnum, char *dispmsg)
 {
-    printf("\nMKMSGD [-v] infile.msg [outfile.[txt | codepage] ]\n\n");
-}
+    char buffer[80] = {0};
 
-void helplong(void)
-{
-    printf("\nUse MKMSGD as follows:\n");
-    printf("        [-v] infile.msg [outfile.[txt | codepage] ]\n");
+    sprintf(buffer, "\n%s (%d)\n", dispmsg, exnum);
 
-    return;
+    if (exnum < 0)
+    {
+        printf("%s", buffer);
+        return;
+    }
+    else
+    {
+        helpshort();
+        printf("%s", buffer);
+        exit(exnum);
+    }
 }

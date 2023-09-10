@@ -1,0 +1,36 @@
+; ********** MKMSGD Message file decompiler **********
+;
+; Input filename           testccc.msg
+; MSG File Version:        2
+; Component Identifier:    MAB
+; Number of messages:      15
+; First message number:    100
+;
+; ******************* Country Info *******************
+;
+; Bytes per character:       1
+; Country Code:              0
+; Language family ID:        0
+; Language version ID:       0
+; Number of codepages:       0
+;
+; File name:                 testccc.msg
+;
+; ** No an extended header **
+;
+MAB
+MAB0100E: File not found
+MAB0101?: 
+MAB0102H: Usage: del [drive:][path] filename
+MAB0103?: 
+MAB0104I: %1 files copied
+MAB0105W: Warning! All data will be destroyed!
+MAB0106?: 
+MAB0107?: 
+MAB0108P: Do you wish to apply these patches (Y or N)? %0
+MAB0109E: Divide overflow
+MAB0110P: Prompt with no 0 at end
+MAB0111I: Info with 0 at end%0
+MAB0112W: Warn with 0 at end%0
+MAB0113E: Err with 0 at end%0
+MAB0114H: Hlp with 0 at end %0
