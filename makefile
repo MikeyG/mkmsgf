@@ -16,11 +16,12 @@ LD = wlink
 
 INCLUDE = .\;$(%watcom)\h;$(%watcom)\h\os2
 
+# the wcd option below surpresses W302 which is okay
 !ifdef DEBUG
 CFLAGS  = -i=$(INCLUDE) -za99 -d3 -wx -od -DDEBUG $(MACHINE) -bm -bt=OS2
 LDFLAGS = d all op map,symf
 !else
-CFLAGS  = -i=$(INCLUDE) -za99 -d0 -wx -zq $(OPT) $(MACHINE) -bm -bt=OS2
+CFLAGS  = -i=$(INCLUDE) -za99 -d0 -wx -zq -wcd=302 $(OPT) $(MACHINE) -bm -bt=OS2
 LDFLAGS =
 !endif
 

@@ -193,9 +193,9 @@ int main(int argc, char *argv[])
 int readheader(MESSAGEINFO *messageinfo)
 {
     MSGHEADER *msgheader = NULL;
-    FILECOUNTRYINFO1 *cpheader = NULL;
+    FILECOUNTRYINFO *cpheader = NULL;
     EXTHDR *extheader = NULL;
-
+    
     // open input file
     FILE *fp = fopen(messageinfo->infile, "rb");
     if (fp == NULL)
@@ -249,8 +249,8 @@ int readheader(MESSAGEINFO *messageinfo)
             messageinfo->reserved[x] = msgheader->reserved[x];
 
         // *** Get country info
-        // re-allocate buffer to size of FILECOUNTRYINFO1
-        header = (char *)realloc(header, sizeof(FILECOUNTRYINFO1));
+        // re-allocate buffer to size of FILECOUNTRYINFO
+        header = (char *)realloc(header, sizeof(FILECOUNTRYINFO));
         if (header == NULL)
             return (MKMSG_MEM_ERROR2);
 
@@ -258,12 +258,12 @@ int readheader(MESSAGEINFO *messageinfo)
         fseek(fp, messageinfo->countryinfo, SEEK_SET);
 
         // read header
-        read = fread(header, sizeof(char), sizeof(FILECOUNTRYINFO1), fp);
+        read = fread(header, sizeof(char), sizeof(FILECOUNTRYINFO), fp);
         if (ferror(fp))
             return (MKMSG_READ_ERROR);
 
-        // FILECOUNTRYINFO1 point to header buffer
-        cpheader = (FILECOUNTRYINFO1 *)header;
+        // FILECOUNTRYINFO point to header buffer
+        cpheader = (FILECOUNTRYINFO *)header;
 
         // Pulls all country information into MESSAGEINFO
         messageinfo->bytesperchar = cpheader->bytesperchar;
@@ -304,7 +304,7 @@ int readheader(MESSAGEINFO *messageinfo)
         if (ferror(fp))
             return (MKMSG_READ_ERROR);
 
-        // FILECOUNTRYINFO1 point to header buffer
+        // FILECOUNTRYINFO point to header buffer
         extheader = (EXTHDR *)header;
 
         messageinfo->extlength = extheader->hdrlen;
@@ -326,7 +326,7 @@ int readheader(MESSAGEINFO *messageinfo)
     // start of message area
     if (messageinfo->version == 2)
         messageinfo->msgoffset = messageinfo->countryinfo +
-                                 sizeof(FILECOUNTRYINFO1);
+                                 sizeof(FILECOUNTRYINFO);
     else
         messageinfo->msgoffset = messageinfo->hdroffset + messageinfo->indexsize;
 

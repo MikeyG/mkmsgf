@@ -409,7 +409,7 @@ int setupheader(MESSAGEINFO *messageinfo)
 
     // messages start after the FILECOUNTRYINFO block
     messageinfo->msgoffset = messageinfo->countryinfo +
-                             sizeof(FILECOUNTRYINFO1);
+                             sizeof(FILECOUNTRYINFO);
 
     // remains 0 for now
     messageinfo->extenblock = 0;
@@ -648,7 +648,7 @@ int writefile(MESSAGEINFO *messageinfo)
 int writeheader(MESSAGEINFO *messageinfo)
 {
     MSGHEADER *msgheader = NULL;
-    FILECOUNTRYINFO1 *cntryheader = NULL;
+    FILECOUNTRYINFO *cntryheader = NULL;
 
     // write output file open for append
     FILE *fpo = fopen(messageinfo->outfile, "wb");
@@ -692,12 +692,12 @@ int writeheader(MESSAGEINFO *messageinfo)
     fwrite(write_buffer, sizeof(char), messageinfo->indexsize, fpo);
 
     // generate and write empty index
-    write_buffer = (char *)realloc(write_buffer, sizeof(FILECOUNTRYINFO1));
+    write_buffer = (char *)realloc(write_buffer, sizeof(FILECOUNTRYINFO));
     if (write_buffer == NULL)
         return (MKMSG_MEM_ERROR2);
 
     memset(write_buffer, 0x00, _msize(write_buffer));
-    cntryheader = (FILECOUNTRYINFO1 *)write_buffer;
+    cntryheader = (FILECOUNTRYINFO *)write_buffer;
 
     cntryheader->bytesperchar = messageinfo->bytesperchar;
     cntryheader->country = messageinfo->country;
@@ -714,7 +714,7 @@ int writeheader(MESSAGEINFO *messageinfo)
 
     cntryheader->filler = 0x00;
 
-    fwrite(cntryheader, sizeof(char), sizeof(FILECOUNTRYINFO1), fpo);
+    fwrite(cntryheader, sizeof(char), sizeof(FILECOUNTRYINFO), fpo);
 
     fclose(fpo);
     free(write_buffer);

@@ -4,8 +4,10 @@
  *
  *  ========================================================================
  *
- *    Version 1.0       Michael K Greene <mike@mgreene.org>
- *                      July 2008
+ *    Version 1.1       Michael K Greene <mikeos2@gmail.com>
+ *                      September 2023 
+ * 
+ *    Version 1.0       July 2008
  *
  *  ========================================================================
  *
@@ -53,8 +55,6 @@
 
 #pragma pack(push, 1)
 
-
-
 // Header of message file
 typedef struct _MSGHEADER
 {
@@ -73,28 +73,15 @@ typedef struct _MSGHEADER
 // Country Info block of message file
 typedef struct _FILECOUNTRYINFO
 {
-    uint8_t bytesperchar;     // Bytes per char (1 - SBCS, 2 - DBCS)
-    uint16_t reserved;        // Not known
-    uint16_t langfamilyID;    // Language family ID (As in CPI Reference)
-    uint16_t langversionID;   // Language version ID (As in CPI Reference)
-    uint16_t codepagesnumber; // Number of codepages
-    uint16_t codepages[16];   // Codepages list (Max 16)
-    uint8_t filename[260];    // Name of file
-    uint8_t filler;           // filler byte - not used
+    uint8_t bytesperchar;        // Bytes per char (1 - SBCS, 2 - DBCS)
+    uint16_t country;            // ID country
+    uint16_t langfamilyID;       // Language family ID (As in CPI Reference)
+    uint16_t langversionID;      // Language version ID (As in CPI Reference)
+    uint16_t codepagesnumber;    // Number of codepages
+    uint16_t codepages[16];      // Codepages list (Max 16)
+    uint8_t filename[_MAX_PATH]; // Name of file
+    uint8_t filler;              // filler byte - not used
 } FILECOUNTRYINFO, *PFILECOUNTRYINFO;
-
-// Country Info block of message file
-typedef struct _FILECOUNTRYINFO1
-{
-    uint8_t bytesperchar;         // Bytes per char (1 - SBCS, 2 - DBCS)
-    uint16_t country;             // ID country
-    uint16_t langfamilyID;        // Language family ID (As in CPI Reference)
-    uint16_t langversionID;       // Language version ID (As in CPI Reference)
-    uint16_t codepagesnumber;     // Number of codepages
-    uint16_t codepages[16];       // Codepages list (Max 16)
-    uint8_t filename[CCHMAXPATH]; // Name of file
-    uint8_t filler;               // filler byte - not used
-} FILECOUNTRYINFO1, *PFILECOUNTRYINFO1;
 
 // extended header block
 typedef struct _EXTHDR
@@ -102,18 +89,6 @@ typedef struct _EXTHDR
     uint16_t hdrlen;    // length of ???
     uint16_t numblocks; // number of additional FILECOUNTRYINFO blocks
 } EXTHDR, *PEXTHDR;
-
-typedef struct _MSGINFO
-{
-    uint16_t msgnum;   // message number
-    uint16_t msgindex; // offset from begin of file
-} MSGINFO, *PMSGINFO;
-
-typedef struct _MSGINFOL
-{
-    uint16_t msgnum;   // message number
-    uint32_t msgindex; // offset from begin of file
-} MSGINFOL, *PMSGINFOL;
 
 typedef struct suppinfo
 {
