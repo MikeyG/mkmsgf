@@ -87,7 +87,7 @@ int main(int argc, char *argv[])
     }
 
     // Get program arguments using getopt()
-    while ((ch = getopt(argc, argv, "vVh")) != -1)
+    while ((ch = getopt(argc, argv, "vVfh")) != -1)
     {
         switch (ch)
         {
@@ -100,6 +100,7 @@ int main(int argc, char *argv[])
             break;
 
         case 'f':
+            // not ready - just shows length diff
             messageinfo.fixlastline += 1;
             break;
 
@@ -507,9 +508,9 @@ int readmessages(MESSAGEINFO *messageinfo)
     unsigned long msg_curr = 0;        // pointer to current index msg
     unsigned long msg_next = 0;        // pointer to next index msg
     unsigned long current_msg = 0;     // current msg number being processed
+    unsigned long intial_len = 0;      // save intial length
     unsigned long current_msg_len = 0; // current msg length
-
-    uint16_t last_message = (messageinfo->numbermsg + messageinfo->firstmsg - 1);
+    unsigned long last_message;        // track last message
 
     // open input file
     FILE *fpi = fopen(messageinfo->infile, "rb");
@@ -548,8 +549,6 @@ int readmessages(MESSAGEINFO *messageinfo)
     if (ferror(fpi))
         return (MKMSG_READ_ERROR);
 
-    // end of info next write identifer
-
     // not pretty, but the old IBM MKMSGF expects this
     // line to end with 0x0D 0x0A
     write_buffer[0] = messageinfo->identifier[0];
@@ -566,6 +565,9 @@ int readmessages(MESSAGEINFO *messageinfo)
         small_index = (uint16_t *)index_buffer;
     else
         large_index = (uint32_t *)index_buffer;
+
+    // last message number
+    last_message = (messageinfo->numbermsg + messageinfo->firstmsg - 1);
 
     // **** main read - read/write loop
     for (int count = 0; count < messageinfo->numbermsg; count++)
@@ -595,6 +597,7 @@ int readmessages(MESSAGEINFO *messageinfo)
 
         // just calc current message length for readability
         current_msg_len = (msg_next - msg_curr);
+        intial_len = current_msg_len; // for fix last line
 
         // seek to the start of message to read
         fseek(fpi, msg_curr, SEEK_SET);
@@ -684,8 +687,10 @@ int readmessages(MESSAGEINFO *messageinfo)
         strncat(write_buffer, scratchptr, current_msg_len);
 
         // if -f option try to fix last line issues
-        if ((current_msg == last_message) && messageinfo.fixlastline)
-            printf("Last Message\n");
+        if ((current_msg == last_message) && messageinfo->fixlastline)
+        {
+            printf("Last Message  Initial %d  Current %d\n", intial_len, current_msg_len);
+        }
 
         // write the record to the output file
         // just a note here: The write_buffer is larger than
@@ -766,7 +771,9 @@ void displayinfo(MESSAGEINFO *messageinfo)
         printf("%02X ", messageinfo->reserved[x]);
     printf("\n");
 
-    if (messageinfo->reserved)
+    if (messageinfo->reserved[0] == 0x4D &&
+        messageinfo->reserved[1] == 0x4B &&
+        messageinfo->reserved[2] == 0x47)
         printf("Built with MKMSGF clone (signature):  %s\n", messageinfo->reserved);
 
     if (messageinfo->version == 2)

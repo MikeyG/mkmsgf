@@ -884,9 +884,6 @@ void displayinfo(MESSAGEINFO *messageinfo)
         printf("%02X ", messageinfo->reserved[x]);
     printf("\n");
 
-    if (messageinfo->reserved)
-        printf("Built with MKMSGF clone (signature):  %s\n", messageinfo->reserved);
-
     if (messageinfo->version == 2)
     {
         printf("\n*********** Country Info  ***********\n\n");

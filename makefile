@@ -49,3 +49,6 @@ clean:  .SYMBOLIC
 CLEANEXTS   = obj exe err lst map sym msg
   @for %a in ($(CLEANEXTS))  do -@rm *.%a
 
+release:  .SYMBOLIC
+RELEXTS   = obj err lst map sym msg
+  @for %a in ($(RELEXTS))  do -@rm *.%a
