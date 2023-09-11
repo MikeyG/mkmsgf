@@ -725,13 +725,13 @@ void usagelong(void)
 
 void helpshort(void)
 {
-    printf("\nMKMSGD [-v] infile.msg [outfile.[txt | codepage] ]\n\n");
+    printf("\nMKMSGD [-v] infile.msg [outfile.[txt] ]\n\n");
 }
 
 void helplong(void)
 {
     printf("\nUse MKMSGD as follows:\n");
-    printf("        [-v] infile.msg [outfile.[txt | codepage] ]\n");
+    printf("        [-v] infile.msg [outfile.[txt] ]\n");
 }
 
 void prgheading(void)
