@@ -1,29 +1,28 @@
                           Upload Information Template for Hobbes.nmsu.edu
                           ===============================================
 
-        Archive Filename: mkmsgf.zip
-       Short Description: Make Message File Utility (MKMSGF) Clone
-        Long Description: I was playing with mkmsg output and came up with this in
-                          the process.  It doesn't support DBCS and might have some
-                          bugs but does work. Source is included to compile with
-                          Open Watcom. Enjoy.
+        Archive Filename: mkmsgf_110.zip
+       Short Description: Make Message File Utility (MKMSGF) clone and decompiler
+        Long Description: For fun I pulled up this old project of mine from 2008
+                          to fix bugs. I also added a decompiler which seems to 
+                          work. 
       Proposed directory
            for placement: /pub/os2/util/system
 
                Your name: Michael Greene
-           Email address: os2@mgreene.org
+           Email address: mikeos2@gmail.com
     Program contact name: (same)
    Program contact email: (same)
-             Program URL: http://www.mgreene.org/
+             Program URL: https://greenenet.ddns.net/os2project/mkmsgf
 
       Would you like the
    contact email address
     included in listings? yes
 
-Operating System/Version: OS/2, ecomstation
+Operating System/Version: OS/2, ecomstation, ArcaOS
  Additional requirements: unknown
 
-                Replaces: (none)
+                Replaces: mkmsgf_2008-07-29.zip
 
 
 

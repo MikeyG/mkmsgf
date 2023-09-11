@@ -190,6 +190,7 @@ typedef struct _MESSAGEINFO
     fpos_t msgstartline;         // start position for compile
     uint8_t langfamilyIDcode;    // Save array position for easy lookup
     uint8_t fakeextend;          // Append a fake extended header
+    uint8_t fixlastline;         // Try and fix last line issues
 } MESSAGEINFO;
 
 // mkmsgf header signature - a valid MSG file alway starts with

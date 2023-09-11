@@ -74,8 +74,9 @@ int main(int argc, char *argv[])
     int rc = 0; // return code
     int ch = 0; // getopt variable
 
-    MESSAGEINFO messageinfo; // holds all the info
-    messageinfo.verbose = 0; // start being quiet
+    MESSAGEINFO messageinfo;     // holds all the info
+    messageinfo.verbose = 0;     // start being quiet
+    messageinfo.fixlastline = 0; // try to fix last line problems
 
     // no args - print usage and exit
     if (argc == 1)
@@ -98,6 +99,10 @@ int main(int argc, char *argv[])
             messageinfo.verbose += 2;
             break;
 
+        case 'f':
+            messageinfo.fixlastline += 1;
+            break;
+
         case 'h':
             prgheading();
             exit(MKMSG_NOERROR);
@@ -113,7 +118,7 @@ int main(int argc, char *argv[])
     {
         // optind 1 should be input file
         strncpy(messageinfo.infile, argv[optind], strlen(argv[optind]));
-        printf("here");
+
         if (access(messageinfo.infile, F_OK) != 0)
             ProgError(MKMSG_INPUT_ERROR, "MKMSGD: Input file does not exist.");
 
@@ -504,6 +509,8 @@ int readmessages(MESSAGEINFO *messageinfo)
     unsigned long current_msg = 0;     // current msg number being processed
     unsigned long current_msg_len = 0; // current msg length
 
+    uint16_t last_message = (messageinfo->numbermsg + messageinfo->firstmsg - 1);
+
     // open input file
     FILE *fpi = fopen(messageinfo->infile, "rb");
     if (fpi == NULL)
@@ -675,6 +682,10 @@ int readmessages(MESSAGEINFO *messageinfo)
 
         // add the message to the write buffer
         strncat(write_buffer, scratchptr, current_msg_len);
+
+        // if -f option try to fix last line issues
+        if ((current_msg == last_message) && messageinfo.fixlastline)
+            printf("Last Message\n");
 
         // write the record to the output file
         // just a note here: The write_buffer is larger than
