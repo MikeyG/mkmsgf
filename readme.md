@@ -1,29 +1,17 @@
-                          Upload Information Template for Hobbes.nmsu.edu
-                          ===============================================
+## Background
+  
+So, I was bored and started playing with ArcaOS. This little trip down memory lane led to installing the current Open Watcom v2 and trying to compile my old RexxUtil project after 15+ years. Go figure, I found some issues and started fixing things. As I was fixing, I decided to test each function. I was on `SysGetMessage` and, as a diversion from looking at the stem functions, I remembered I had done a mkmsgf clone. I made a couple test MSG files with the mkmsgf to use with `SysGetMessage` and realized they were not quite correct. 
+  
+Yep, down a rabbit hole. Well, I need to look at the real format of MSG files. I needed to decompile an MSG file to verify the format. In the end, there was mkmsgd. I can decompile an MSG and use the old IBM mkmsgf to recompile with most options. 
+  
+- [MKMSGF Usage](MKMSGF-Usage)  
+- [Input Message File](Input-Message-File)   
+- [Original MKMSGF Issues](Original-MKMSGF-Issues) 
+- [What-Standard?](What-Standard%3F) 
+- [The A, C, and I Options](The-A,-C,-and-I-Options) 
+- [The Extended Structure](The-Extended-Structure) 
+- [Country Info](Country-Info)    
+  
+**References:**  
 
-        Archive Filename: mkmsgf.zip
-       Short Description: Make Message File Utility (MKMSGF) Clone
-        Long Description: I was playing with mkmsg output and came up with this in
-                          the process.  It doesn't support DBCS and might have some
-                          bugs but does work. Source is included to compile with
-                          Open Watcom. Enjoy.
-      Proposed directory
-           for placement: /pub/os2/util/system
-
-               Your name: Michael Greene
-           Email address: os2@mgreene.org
-    Program contact name: (same)
-   Program contact email: (same)
-             Program URL: http://www.mgreene.org/
-
-      Would you like the
-   contact email address
-    included in listings? yes
-
-Operating System/Version: OS/2, ecomstation
- Additional requirements: unknown
-
-                Replaces: (none)
-
-
-
+[CPGuide - Message Management](http://www.edm2.com/index.php/CPGuide_-_Message_Management) 
