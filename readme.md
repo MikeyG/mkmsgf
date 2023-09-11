@@ -4,13 +4,8 @@ So, I was bored and started playing with ArcaOS. This little trip down memory la
   
 Yep, down a rabbit hole. Well, I need to look at the real format of MSG files. I needed to decompile an MSG file to verify the format. In the end, there was mkmsgd. I can decompile an MSG and use the old IBM mkmsgf to recompile with most options. 
   
-- [MKMSGF Usage](MKMSGF-Usage)  
-- [Input Message File](Input-Message-File)   
-- [Original MKMSGF Issues](Original-MKMSGF-Issues) 
-- [What-Standard?](What-Standard%3F) 
-- [The A, C, and I Options](The-A,-C,-and-I-Options) 
-- [The Extended Structure](The-Extended-Structure) 
-- [Country Info](Country-Info)    
+See the wiki for more info: [https://greenenet.ddns.net/os2project/mkmsgf/-/wikis/home](Wiki Home)  
+   
   
 **References:**  
 
